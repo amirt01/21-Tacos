@@ -4,16 +4,21 @@ import matplotlib.pyplot as plt
 
 class ReedSwitch:
     def __init__(self, rpm: float):
-        self.spr = 60 / rpm
-        self.passing_time = 5 * self.spr / 360
+        self.rpm = rpm
         self.last_rev_time = time.time()
 
     def read(self) -> bool:
+        spr = 0
+        if self.rpm != 0:
+            spr = 60 / self.rpm
+
+        passing_time = 5 * spr / 360
+
         t = time.time()
         time_since_last_rev = t - self.last_rev_time
-        if time_since_last_rev < self.passing_time:
+        if time_since_last_rev < passing_time:
             return True
-        if time_since_last_rev < self.spr:
+        if time_since_last_rev < spr:
             return False
         else:
             # rev_time should be at the center of the magnet passing
