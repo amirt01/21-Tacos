@@ -8,9 +8,7 @@ class ReedSwitch:
         self.last_rev_time = time.time()
 
     def read(self) -> bool:
-        spr = 0
-        if self.rpm != 0:
-            spr = 60 / self.rpm
+        spr = float("inf") if self.rpm == 0 else 60 / self.rpm
 
         passing_time = 5 * spr / 360
 
