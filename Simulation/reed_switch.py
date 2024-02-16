@@ -23,13 +23,11 @@ class ReedSwitch:
         else:
             # rev_time should be at the center of the magnet passing
             self.last_rev_time = t
-            return False
+            return True
 
 
-if __name__ == "__main__":
-    rs = ReedSwitch(rpm=120)
-    print("spr: ", rs.spr)
-    print("passing_time: ", rs.passing_time)
+def constant_360rpm():
+    rs = ReedSwitch(rpm=360)
 
     times = []
     values = []
@@ -41,7 +39,39 @@ if __name__ == "__main__":
         values.append(rs.read())
 
     plt.plot(times, values)
-    plt.title("Reed Switch Value Over Time at 120rpm")
+    plt.title("Reed Switch Value Over Time at 360rpm")
     plt.xlabel("Time (s)")
     plt.ylabel("Value")
     plt.show()
+
+
+def ramp_360rpm():
+    rs = ReedSwitch(rpm=0)
+
+    target_rpm = 360
+    total_time = 5
+    acceleration = target_rpm / total_time
+
+    times = []
+    values = []
+
+    t_start = time.time()
+    t_end = t_start + total_time
+    last_update_time = t_start
+    while time.time() < t_end:
+        dt = time.time() - last_update_time
+        last_update_time = time.time()
+        rs.rpm += acceleration * dt
+        times.append(time.time() - t_start)
+        values.append(rs.read())
+
+    plt.plot(times, values)
+    plt.title("Reed Switch Value Over Time ramping to 360rpm")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Value")
+    plt.show()
+
+
+if __name__ == "__main__":
+    constant_360rpm()
+    ramp_360rpm()
