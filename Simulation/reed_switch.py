@@ -71,5 +71,8 @@ def ramp_360rpm():
 
 
 if __name__ == "__main__":
+    import time
+    import matplotlib.pyplot as plt
+
     constant_360rpm()
     ramp_360rpm()
