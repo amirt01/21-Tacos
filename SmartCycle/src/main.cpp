@@ -2,20 +2,16 @@
 
 #include <bitset>
 
-static constexpr auto REED_SWITCH_PIN{13};
-static constexpr auto SHIFT_UP_BUTTON_PIN{12};
-static constexpr auto SHIFT_DOWN_BUTTON_PIN{27};
+static constexpr uint8_t REED_SWITCH_PIN{13};
+static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
+static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
 
 enum class States {
-    Sleeping,
-    Waiting,
-    Coasting,
-    Shifting
+  Sleeping,
+  Waiting,
+  Coasting,
+  Shifting
 } current_state;
-
-void reed_switch_isr();
-void shift_up_button_isr();
-void shift_down_button_isr();
 
 enum sensor_flag_ids {
   reed_switch,
@@ -25,32 +21,25 @@ enum sensor_flag_ids {
 };
 std::bitset<n_sensor_flags> sensor_flags{};
 
+// TODO: test to see if RISING is the best interrupt mode
+template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id, uint8_t pin_mode = INPUT_PULLUP, int interrupt_mode = RISING>
+void setup_switch();
+
 void setup() {
   Serial.begin(115200);
-
-  pinMode(REED_SWITCH_PIN, INPUT_PULLUP);
-  pinMode(SHIFT_UP_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(SHIFT_DOWN_BUTTON_PIN, INPUT_PULLUP);
-
-  attachInterrupt(digitalPinToInterrupt(REED_SWITCH_PIN), reed_switch_isr, FALLING);
-  attachInterrupt(digitalPinToInterrupt(REED_SWITCH_PIN), shift_up_button_isr, FALLING);
-  attachInterrupt(digitalPinToInterrupt(REED_SWITCH_PIN), shift_down_button_isr, FALLING);
+  
+  setup_switch<REED_SWITCH_PIN, sensor_flag_ids::reed_switch>();
+  setup_switch<SHIFT_UP_BUTTON_PIN, sensor_flag_ids::shift_up_button>();
+  setup_switch<SHIFT_DOWN_BUTTON_PIN, sensor_flag_ids::shift_down_button>();
 }
 
 void loop() {
-  switch(current_state) {
+  switch (current_state) {
   }
 }
 
-void reed_switch_isr() {
-  sensor_flags.set(sensor_flag_ids::reed_switch);
-}
-
-void shift_up_button_isr() {
-  sensor_flags.set(sensor_flag_ids::shift_up_button);
-  
-}
-
-void shift_down_button_isr() {
-  sensor_flags.set(sensor_flag_ids::shift_down_button);
+template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id, uint8_t pin_mode = INPUT_PULLUP, int interrupt_mode = RISING>
+void setup_switch() {
+  pinMode(sensor_pin, pin_mode);
+  attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { sensor_flags.set(sensor_flag_id); }, interrupt_mode);
 }
