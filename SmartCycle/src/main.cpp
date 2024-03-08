@@ -13,6 +13,10 @@ enum class States {
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(REED_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(SHIFT_UP_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(SHIFT_DOWN_BUTTON_PIN, INPUT_PULLUP);
 }
 
 void loop() {
