@@ -7,10 +7,9 @@ static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
 static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
 
 enum class States {
-  Sleeping,
-  Waiting,
-  Coasting,
-  Shifting
+  Sleep,
+  Stop,
+  Pedaling
 } current_state;
 
 enum sensor_flag_ids {
@@ -34,6 +33,14 @@ void setup() {
 
 void loop() {
   switch (current_state) {
+    case States::Sleep:
+      break;
+    case States::Stop:
+      break;
+    case States::Pedaling:
+      break;
+    default:
+      break;
   }
 }
 
