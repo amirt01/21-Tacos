@@ -12,6 +12,7 @@ enum class States {
 } current_state;
 
 void setup() {
+  Serial.begin(115200);
 }
 
 void loop() {
