@@ -21,8 +21,7 @@ enum sensor_flag_ids {
 };
 std::bitset<n_sensor_flags> sensor_flags{};
 
-// TODO: test to see if RISING is the best interrupt mode
-template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id, uint8_t pin_mode = INPUT_PULLUP, int interrupt_mode = RISING>
+template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
 void setup_switch();
 
 void setup() {
@@ -38,8 +37,11 @@ void loop() {
   }
 }
 
-template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id, uint8_t pin_mode = INPUT_PULLUP, int interrupt_mode = RISING>
+template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
 void setup_switch() {
-  pinMode(sensor_pin, pin_mode);
-  attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { sensor_flags.set(sensor_flag_id); }, interrupt_mode);
+  //TODO: test if INPUT_PULLUP is the best pin mode
+  pinMode(sensor_pin, INPUT_PULLUP);
+
+  // TODO: test to see if RISING is the best interrupt mode
+  attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { sensor_flags.set(sensor_flag_id); }, RISING);
 }
