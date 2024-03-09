@@ -57,14 +57,44 @@ void setup() {
 }
 
 void loop() {
+  const auto current_time = millis();
+
+  /* SENSOR UPDATES */
+  update_ground_speed(current_time);
+
   switch (current_state) {
-    case States::Sleep:
+    const auto current_time = millis();
+    case States::Asleep:
+      if (sensor_flags.test(shift_up_button) || sensor_flags.test(shift_down_button)) {
+        current_state = States::Stopped;
+      } else if (ground_speed > 0.1) {
+        current_state = States::Biking;
+      }
       break;
-    case States::Stop:
+    case States::Stopped:
+      if (ground_speed > 0.1) {
+        current_state = States::Biking;
+      }
+
+      update_shifter(0);
       break;
-    case States::Pedaling:
+    case States::Shifting_Up:
+      update_anticipations();
+      update_shifter(1);
+      if (true) {  // TODO: add check for done shifting
+        current_state = States::Biking;
+      }
       break;
-    default:
+    case States::Shifting_Down:
+      update_anticipations();
+      update_shifter(-1);
+      if (true) {  // TODO: add check for done shifting
+        current_state = States::Biking;
+      }
+      break;
+    case States::Biking:
+      update_anticipations();
+      update_shifter(0);
       break;
   }
 }
