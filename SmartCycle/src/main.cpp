@@ -2,9 +2,11 @@
 
 #include <bitset>
 
+/* PINS */
 static constexpr uint8_t REED_SWITCH_PIN{13};
 static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
 static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
+static constexpr uint8_t MOTOR_PIN{18};
 
 enum class States {
   Sleep,
