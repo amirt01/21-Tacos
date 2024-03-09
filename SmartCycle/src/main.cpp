@@ -27,7 +27,7 @@ uint8_t current_gear{1};  // [1-6]
 float acceleration{};
 
 /* SETUP FUNCTIONS */
-template <uint8_t sensor_pin, bool& flag>
+template<uint8_t sensor_pin, bool& flag>
 void setup_switch();
 
 /* RUN FUNCTIONS */
@@ -55,7 +55,7 @@ void update_ground_speed(const unsigned long current_time) {
 
 void setup() {
   Serial.begin(115200);
-  
+
   setup_switch<REED_SWITCH_PIN, reed_switch_flag>();
   setup_switch<SHIFT_UP_BUTTON_PIN, shift_up_button_flag>();
   setup_switch<SHIFT_DOWN_BUTTON_PIN, shift_down_button_flag>();
@@ -107,11 +107,11 @@ void loop() {
   }
 }
 
-template <uint8_t sensor_pin, bool& flag>
+template<uint8_t sensor_pin, bool& flag>
 void setup_switch() {
   //TODO: test if INPUT_PULLUP is the best pin mode
   pinMode(sensor_pin, INPUT_PULLUP);
-  
+
   // TODO: test to see if RISING is the best interrupt mode
   attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { flag = true; }, RISING);
 }
