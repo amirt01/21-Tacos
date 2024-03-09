@@ -1,7 +1,5 @@
 #include <Arduino.h>
 
-#include <bitset>
-
 /* PINS */
 static constexpr uint8_t REED_SWITCH_PIN{13};
 static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
