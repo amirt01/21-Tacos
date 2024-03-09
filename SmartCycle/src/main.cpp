@@ -34,8 +34,26 @@ enum sensor_flag_ids {
 };
 std::bitset<n_sensor_flags> sensor_flags{};
 
+/* CURRENT ESTIMATES */
+float ground_speed{};    // [meters per second]
+uint8_t current_gear{1};  // [1-6]
+float acceleration{};
+
+/* SETUP FUNCTIONS */
 template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
 void setup_switch();
+
+/* RUN FUNCTIONS */
+void update_shifter(int8_t direction) {  // -1 shifting down; 0 holding; +1 shifting up
+  // TODO: add PID control
+  float shift_amount = direction * 0.01;
+  digitalWrite(MOTOR_PIN, shift_amount);
+};
+
+void update_anticipations() {
+  // TODO: implement this
+  // anticipate using the camera (i.e. slowing down via stop sign, traffic light, object on road, etc)
+}
 
 void update_ground_speed(const unsigned long current_time) {
   static unsigned long last_reed_time{};
