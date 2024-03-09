@@ -8,6 +8,9 @@ static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
 static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
 static constexpr uint8_t MOTOR_PIN{18};
 
+/* BIKE CONSTANTS*/
+static constexpr float WHEEL_DIAMETER{1};  // [m] // TODO: check this
+
 enum class States {
   Asleep,            // Low power mode
   Stopped,           // Waiting to bike again
@@ -33,6 +36,17 @@ std::bitset<n_sensor_flags> sensor_flags{};
 
 template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
 void setup_switch();
+
+void update_ground_speed(const unsigned long current_time) {
+  static unsigned long last_reed_time{};
+
+  if (sensor_flags.test(reed_switch)) {
+    ground_speed = WHEEL_DIAMETER * M_PI / (current_time - last_reed_time);
+
+    last_reed_time = current_time;
+    sensor_flags.reset(reed_switch);
+  }
+}
 
 void setup() {
   Serial.begin(115200);
