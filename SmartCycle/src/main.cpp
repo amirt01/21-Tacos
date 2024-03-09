@@ -19,20 +19,9 @@ enum class States {
   Biking             // Coasting or Pedaling at constant speed
 } current_state;
 
-enum class Transitions {
-  Pedal_Start,        // Asleep/Stopped -> Biking
-  Button_Wake,        // Asleep -> Stopped
-  Push_Start,         // Asleep/Stopped -> Biking
-  Falling_Asleep      // Biking/Stopped -> Asleep
-} current_transition;
-
-enum sensor_flag_ids {
-  reed_switch,
-  shift_up_button,
-  shift_down_button,
-  n_sensor_flags
-};
-std::bitset<n_sensor_flags> sensor_flags{};
+bool reed_switch_flag;
+bool shift_up_button_flag;
+bool shift_down_button_flag;
 
 /* CURRENT ESTIMATES */
 float ground_speed{};    // [meters per second]
@@ -40,7 +29,7 @@ uint8_t current_gear{1};  // [1-6]
 float acceleration{};
 
 /* SETUP FUNCTIONS */
-template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
+template <uint8_t sensor_pin, bool& flag>
 void setup_switch();
 
 /* RUN FUNCTIONS */
@@ -58,20 +47,20 @@ void update_anticipations() {
 void update_ground_speed(const unsigned long current_time) {
   static unsigned long last_reed_time{};
 
-  if (sensor_flags.test(reed_switch)) {
+  if (reed_switch_flag) {
     ground_speed = WHEEL_DIAMETER * M_PI / (current_time - last_reed_time);
 
     last_reed_time = current_time;
-    sensor_flags.reset(reed_switch);
+    reed_switch_flag = false;
   }
 }
 
 void setup() {
   Serial.begin(115200);
   
-  setup_switch<REED_SWITCH_PIN, sensor_flag_ids::reed_switch>();
-  setup_switch<SHIFT_UP_BUTTON_PIN, sensor_flag_ids::shift_up_button>();
-  setup_switch<SHIFT_DOWN_BUTTON_PIN, sensor_flag_ids::shift_down_button>();
+  setup_switch<REED_SWITCH_PIN, reed_switch_flag>();
+  setup_switch<SHIFT_UP_BUTTON_PIN, shift_up_button_flag>();
+  setup_switch<SHIFT_DOWN_BUTTON_PIN, shift_down_button_flag>();
 }
 
 void loop() {
@@ -81,9 +70,12 @@ void loop() {
   update_ground_speed(current_time);
 
   switch (current_state) {
-    const auto current_time = millis();
     case States::Asleep:
-      if (sensor_flags.test(shift_up_button) || sensor_flags.test(shift_down_button)) {
+      if (shift_up_button_flag) {
+        shift_up_button_flag = false;
+        current_state = States::Stopped;
+      } else if (shift_down_button_flag) {
+        shift_up_button_flag = false;
         current_state = States::Stopped;
       } else if (ground_speed > 0.1) {
         current_state = States::Biking;
@@ -117,11 +109,11 @@ void loop() {
   }
 }
 
-template <uint8_t sensor_pin, sensor_flag_ids sensor_flag_id>
+template <uint8_t sensor_pin, bool& flag>
 void setup_switch() {
   //TODO: test if INPUT_PULLUP is the best pin mode
   pinMode(sensor_pin, INPUT_PULLUP);
-
+  
   // TODO: test to see if RISING is the best interrupt mode
-  attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { sensor_flags.set(sensor_flag_id); }, RISING);
+  attachInterrupt(digitalPinToInterrupt(sensor_pin), [] { flag = true; }, RISING);
 }
