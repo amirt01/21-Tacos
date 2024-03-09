@@ -9,10 +9,19 @@ static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
 static constexpr uint8_t MOTOR_PIN{18};
 
 enum class States {
-  Sleep,
-  Stop,
-  Pedaling
+  Asleep,            // Low power mode
+  Stopped,           // Waiting to bike again
+  Shifting_Up,       // Shifting to higher gear
+  Shifting_Down,     // Shifting to lower gear
+  Biking             // Coasting or Pedaling at constant speed
 } current_state;
+
+enum class Transitions {
+  Pedal_Start,        // Asleep/Stopped -> Biking
+  Button_Wake,        // Asleep -> Stopped
+  Push_Start,         // Asleep/Stopped -> Biking
+  Falling_Asleep      // Biking/Stopped -> Asleep
+} current_transition;
 
 enum sensor_flag_ids {
   reed_switch,
