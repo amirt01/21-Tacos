@@ -33,12 +33,13 @@ class GroundEstimator {
     const auto time_since_last_reed = float(current_time - last_reed_time) * us_to_s;  // [s]
 
     auto update_estimates = [this, current_time, time_since_last_reed] {
-      // FIXME: divide by zero if spr or update_dt is zero
       spr = time_since_last_reed;
-      const auto new_speed = WHEEL_DIAMETER * PI_F / spr;
+
+      // FIXME: divide by zero if spr or is zero
+      const auto ds = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / spr) - speed);
       const auto dt = float(current_time - last_update_time) * us_to_s;
-      acceleration = (new_speed - speed) / dt;
-      speed = new_speed;
+
+      acceleration = ds / dt;
       last_update_time = current_time;
 
       // acceleration = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / (spr = time_since_last_reed)) - speed)
