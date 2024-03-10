@@ -101,6 +101,13 @@ void loop() {
       }
       break;
     case States::Biking:
+    case States::Biking: {
+      // TODO: find the stop speed cutoff value
+      static constexpr auto STOP_SPEED_CUTOFF{0.1};  // [meters per second]
+      if (ground_estimator.get_speed() < STOP_SPEED_CUTOFF) {
+        current_state = States::Stopped;
+        break;
+      }
       update_anticipations();
       update_shifter(0);
       break;
