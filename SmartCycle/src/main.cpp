@@ -110,6 +110,19 @@ void loop() {
       }
       update_anticipations();
       update_shifter(0);
+      // TODO: find the value
+      static constexpr auto SHIFT_ACCELERATION_CUTOFF{0.5f};   // [meters per second per second]
+      if (shift_up_button_flag) {
+        shift_up_button_flag = false;
+        current_state = States::Shifting_Up;
+      } else if (shift_down_button_flag) {
+        shift_down_button_flag = false;
+        current_state = States::Shifting_Down;
+      } else if (acceleration > SHIFT_ACCELERATION_CUTOFF) {
+        current_state = States::Shifting_Up;
+      } else if (acceleration < -SHIFT_ACCELERATION_CUTOFF) {
+        current_state = States::Shifting_Down;
+      }
       break;
   }
 }
