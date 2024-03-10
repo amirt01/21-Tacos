@@ -11,37 +11,46 @@
 #include <utility>
 
 class GroundEstimator {
-  static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
-  static constexpr float PI_F{M_PI};
-
+  /* Flags */
   bool reed_switch_flag{};
 
+  /* TIMING */
   unsigned long last_reed_time{};
   unsigned long last_update_time{};
 
+  /* ESTIMATES */
   float spr{infinityf()};  // seconds per revolution
   float speed{};           // [mps]
   float acceleration{};    // [mps2]
 
  public:
   void update(const unsigned long current_time) {
-    const auto time_since_last_reed = float(current_time - last_reed_time) * 0e-6f;  // [s]
+    /* PHYSICAL CONSTANTS */
+    static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
+    static constexpr float PI_F{M_PI};
+    static constexpr float ms_to_s{1e-6f};
 
+    const auto time_since_last_reed = float(current_time - last_reed_time) * ms_to_s;  // [s]
+
+    auto update_estimates = [this, current_time, time_since_last_reed] {
+      // FIXME: divide by zero if spr or update_dt is zero
+      acceleration = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / (spr = time_since_last_reed)) - speed)
+          / (float(current_time - std::exchange(last_update_time, current_time)) * ms_to_s);
+    };
+
+    // TODO: look for a cleaner logic flow
     if (!reed_switch_flag) {
       if (time_since_last_reed > spr) {
-        spr = time_since_last_reed;
+        update_estimates();
       }
       // TODO: find the optimal debounce time
-    } else if (static constexpr float DEBOUNCE_TIME{0.1f}; time_since_last_reed > DEBOUNCE_TIME) {
-      spr = time_since_last_reed;
-      last_reed_time = current_time;
+    } else {
+      reed_switch_flag = false;
+      if (static constexpr float DEBOUNCE_TIME{0.1f}; time_since_last_reed > DEBOUNCE_TIME) {
+        last_reed_time = current_time;
+        update_estimates();
+      }
     }
-
-    // FIXME: divide by zero if spr or update_dt is zero
-    acceleration = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / spr) - speed)
-        / (float(current_time - std::exchange(last_update_time, current_time)) * 1e-6f);
-
-    reed_switch_flag = false;
   }
 
   bool set_reed_switch_flag(const bool value = true) noexcept { return reed_switch_flag = value; }
