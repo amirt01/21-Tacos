@@ -41,9 +41,6 @@ class GroundEstimator {
 
       acceleration = ds / dt;
       last_update_time = current_time;
-
-      // acceleration = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / (spr = time_since_last_reed)) - speed)
-      //    / (float(current_time - std::exchange(last_update_time, current_time)) * ms_to_s);
     };
 
     // TODO: look for a cleaner logic flow
