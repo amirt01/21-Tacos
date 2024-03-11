@@ -11,11 +11,11 @@
 class Shifter {
   /* PHYSICAL CONSTANTS */
   // TODO: find the actual min/max encoder values
-  static constexpr short MIN_GEAR{1};
-  static constexpr short MAX_GEAR{6};
+  static constexpr int MIN_GEAR{1};
+  static constexpr int MAX_GEAR{6};
 
   // TODO: find the actual nominal encoder values
-  static constexpr std::array<short, MAX_GEAR> nominal_gear_encoder_values {
+  static constexpr std::array<int, MAX_GEAR> nominal_gear_encoder_values {
       100,  // first gear
       200,  // second gear
       300,  // third gear
@@ -24,19 +24,19 @@ class Shifter {
       600   // sixth gear
   };
 
-  short target_gear{3};    // [1-6]
-  short motor_signal{};
+  int target_gear{3};    // [1-6]
+  int motor_signal{};
 
   /* ESTIMATES */
   short encoder_value{};  // [encoder range] TODD: find encoder range
 
-  bool shift(short new_gear);
+  bool shift(int new_gear);
 
  public:
   void update();
 
-  [[nodiscard]] short current_gear() const;
-  [[nodiscard]] short get_motor_signal() const { return motor_signal; };
+  [[nodiscard]] int current_gear() const;
+  [[nodiscard]] int get_motor_signal() const { return motor_signal; };
 
   void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
 
