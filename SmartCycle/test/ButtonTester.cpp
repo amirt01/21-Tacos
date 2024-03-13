@@ -4,10 +4,10 @@
 
 #include <arduino.h>
 
-#include "ButtonHandler.hpp"
+#include "Button.hpp"
 
 static constexpr uint8_t BUTTON_PIN{13};
-ButtonHandler<BUTTON_PIN> bh{};
+Button<BUTTON_PIN> bh{};
 
 bool test_flag;
 
