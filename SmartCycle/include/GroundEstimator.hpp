@@ -23,10 +23,20 @@ class GroundEstimator {
   float speed{};           // [mps]
   float acceleration{};    // [mps2]
 
+  GroundEstimator() = default;
+
  public:
+  GroundEstimator(GroundEstimator const&) = delete;
+  void operator=(GroundEstimator const&) = delete;
+
+  static GroundEstimator& get_ground_estimator() {
+    static GroundEstimator ge;
+    return ge;
+  }
+
   void update(unsigned long current_time);
 
-  bool set_reed_switch_flag(const bool value = true) noexcept { return reed_switch_flag = value; }
+  constexpr void set_reed_switch_flag(const bool value = true) noexcept { reed_switch_flag = value; }
 
   [[nodiscard]] float get_speed() const { return speed; }
   [[nodiscard]] float get_acceleration() const { return acceleration; }
