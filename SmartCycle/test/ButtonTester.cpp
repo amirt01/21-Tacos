@@ -7,19 +7,16 @@
 #include "ButtonHandler.hpp"
 
 static constexpr uint8_t BUTTON_PIN{13};
-
-ButtonHandler bh{};
+ButtonHandler<BUTTON_PIN> bh{};
 
 bool test_flag;
 
 void setup() {
   Serial.begin(115200);
-
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-  bh.update(millis(), digitalRead(BUTTON_PIN));
+  bh.update();
 
-  Serial.printf("%lu\tbutton state: %s\n", micros(), bh.get_button_state_string().c_str());
+  Serial.printf("%lu\tbutton state: %s\n", millis(), bh.get_button_state_string().c_str());
 }

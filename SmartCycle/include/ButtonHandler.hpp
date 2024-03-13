@@ -15,6 +15,7 @@ enum class ButtonState {
   Held
 };
 
+template<int button_pin>
 class ButtonHandler {
   static constexpr auto debounce_time{50};  // [ms]
   static constexpr auto hold_time{500};    // [ms]
@@ -25,7 +26,13 @@ class ButtonHandler {
   unsigned long press_start_time{};
 
  public:
-  void update(const unsigned long current_time, const byte pin_state) {
+  ButtonHandler() {
+    pinMode(button_pin, INPUT_PULLUP);
+  }
+
+  void update() {
+    const unsigned long current_time = millis();
+    const byte pin_state = digitalRead(button_pin);
     const auto dt = current_time - press_start_time;
     if (pin_state == HIGH) {
       button_state = ButtonState::Released;
@@ -49,6 +56,7 @@ class ButtonHandler {
       case ButtonState::Pressed: return "Pressed";
       case ButtonState::Released: return "Released";
       case ButtonState::Held: return "Held";
+      default: return "wtf...";
     }
   }
 };
