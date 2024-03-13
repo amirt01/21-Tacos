@@ -17,7 +17,7 @@ void setup() {
 }
 
 void loop() {
-  ge.update(micros());
+  ge.update();
   Serial.printf("%lu\tspeed: %f\tacceleration: %f\n",
                 micros(),
                 ge.get_speed(),

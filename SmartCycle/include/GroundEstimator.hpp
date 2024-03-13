@@ -45,12 +45,13 @@ class GroundEstimator {
                     RISING);
   }
 
-  void update(unsigned long current_time) {
+  void update() {
     /* PHYSICAL CONSTANTS */
     static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
     static constexpr float PI_F{M_PI};
     static constexpr float us_to_s{1e-6f};
 
+    unsigned long current_time = micros();
     const auto time_since_last_reed = float(current_time - last_reed_time) * us_to_s;  // [s]
 
     auto update_estimates = [this, current_time, time_since_last_reed] {
