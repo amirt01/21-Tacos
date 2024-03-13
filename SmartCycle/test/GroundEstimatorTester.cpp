@@ -30,5 +30,5 @@ void loop() {
     test_flag = false;
 //    Serial.print("hit");
   }
-  Serial.printf("\t%lu\tspeed: %f\tacceleration: %f\n", micros(), ge.get_speed(), ge.get_acceleration());
+  Serial.printf("%lu\tspeed: %f\tacceleration: %f\n", micros(), ge.get_speed(), ge.get_acceleration());
 }
