@@ -24,7 +24,7 @@ class Shifter {
       600   // sixth gear
   };
 
-  int target_gear{3};    // [1-6]
+  int target_gear{1};    // [1-6]
   int motor_signal{};
 
   /* ESTIMATES */

@@ -25,5 +25,5 @@ int Shifter::current_gear() const {
   auto closest_nominal_encoder_value_itr =
       std::min_element(distances_to_encoder_value.cbegin(), distances_to_encoder_value.cend());
 
-  return std::distance(std::begin(nominal_gear_encoder_values), closest_nominal_encoder_value_itr) + 1;
+  return std::distance(distances_to_encoder_value.cbegin(), closest_nominal_encoder_value_itr) + 1;
 };
