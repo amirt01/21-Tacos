@@ -15,7 +15,7 @@
 template<int reed_switch_pin>
 class GroundEstimator {
   /* Flags */
-  bool reed_switch_flag{};
+  volatile bool reed_switch_flag{};
 
   /* TIMING */
   unsigned long last_reed_time{};
@@ -28,9 +28,6 @@ class GroundEstimator {
 
   GroundEstimator() {
     pinMode(reed_switch_pin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
-                    [] { GroundEstimator::get_ground_estimator().reed_switch_flag = true; },
-                    RISING);
   }
 
  public:
@@ -38,8 +35,14 @@ class GroundEstimator {
   void operator=(GroundEstimator const&) = delete;
 
   static GroundEstimator& get_ground_estimator() {
-    static GroundEstimator ge;
+    static GroundEstimator ge{};
     return ge;
+  }
+
+  void setup() {
+    attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
+                    [] { GroundEstimator::get_ground_estimator().reed_switch_flag = true; },
+                    RISING);
   }
 
   void update(unsigned long current_time) {
@@ -75,8 +78,6 @@ class GroundEstimator {
       }
     }
   }
-
-  constexpr void set_reed_switch_flag(const bool value = true) noexcept { reed_switch_flag = value; }
 
   [[nodiscard]] float get_speed() const { return speed; }
   [[nodiscard]] float get_acceleration() const { return acceleration; }

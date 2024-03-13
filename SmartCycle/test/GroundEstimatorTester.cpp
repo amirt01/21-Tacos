@@ -8,27 +8,16 @@
 
 static constexpr uint8_t REED_SWITCH_PIN{13};
 
-auto& ge = GroundEstimator::get_ground_estimator();
-
-bool test_flag;
+auto& ge = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();
 
 void setup() {
   Serial.begin(115200);
 
-  //TODO: test if INPUT_PULLUP is the best pin mode
-  pinMode(REED_SWITCH_PIN, INPUT_PULLUP);
-  // TODO: test to see if RISING is the best interrupt mode
-  attachInterrupt(digitalPinToInterrupt(REED_SWITCH_PIN), [] {
-    ge.set_reed_switch_flag();
-  }, RISING);
+  ge.setup();
 }
 
 void loop() {
   ge.update(micros());
-  if (test_flag) {
-    test_flag = false;
-//    Serial.print("hit");
-  }
   Serial.printf("%lu\tspeed: %f\tacceleration: %f\n",
                 micros(),
                 ge.get_speed(),
