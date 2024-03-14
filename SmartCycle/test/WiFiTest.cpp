@@ -4,18 +4,18 @@
 #include <Arduino.h>
 
 #include "WiFi.h"
-#include "ESPAsyncWebServer.h"
+#include "WebSocketsServer.h"
+#include "ArduinoJson.hpp"
 
-const char* ssid = "ESP32-Access-Point";
-const char* password = "123456789";
+const char* ssid = "SmartCycle";
+const char* password = "bikesmart";
 
-AsyncWebServer server(80);
+WebSocketsServer web_socket = WebSocketsServer(80);
+void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length);
 
-void setup(){
+void setup() {
   Serial.begin(115200);
   Serial.println();
-
-  char acc_data[30];
 
   Serial.print("Setting AP (Access Point)…");
   WiFi.softAP(ssid, password);
@@ -24,14 +24,37 @@ void setup(){
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
-  server.on("/cadence", HTTP_GET, [i=0](AsyncWebServerRequest *request) mutable {
-    char buffer[10];
-    request->send_P(200, "text/plain", itoa(i++, buffer, 10));
-  });
-
-  server.begin();
+  web_socket.begin();
+  web_socket.onEvent(web_socket_event);
 }
 
-void loop(){
+void loop() {
+  web_socket.loop();
 
+  static unsigned long previous_loop{};
+  if (unsigned long now = millis(); now > previous_loop) {
+    web_socket.broadcastTXT("");
+
+    String jsonString = "";
+    ArduinoJson::JsonDocument doc;
+    ArduinoJson::JsonObject object = doc.to<ArduinoJson::JsonObject>();
+    object["rand1"] = random(100);
+    object["rand2"] = random(100);
+    serializeJson(doc, jsonString);
+    Serial.println(jsonString);
+    web_socket.broadcastTXT(jsonString);
+
+    previous_loop = now + 500;
+  }
+}
+
+void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:Serial.println("Client " + String(num) + " disconnected");
+      break;
+    case WStype_CONNECTED:Serial.println("Client " + String(num) + " connected");
+      // optionally you can add code here what to do when connected
+      break;
+    default:break;
+  }
 }
