@@ -24,12 +24,11 @@ class Button {
   }
 
   void update() {
-    const unsigned long current_time = millis();
     const byte pin_state = digitalRead(button_pin);
-    const auto dt = current_time - press_start_time;
+
     if (pin_state == HIGH) {
       button_state = false;
-    } else if (dt > debounce_time) {
+    } else if (const auto current_time = millis(); current_time - press_start_time > debounce_time) {
       if (last_pin_state == HIGH) {
         press_start_time = current_time;
       } else {
@@ -43,11 +42,7 @@ class Button {
   [[nodiscard]] constexpr bool get_button_state() const noexcept { return button_state; }
 
   [[maybe_unused, nodiscard]] std::string get_button_state_string() const noexcept {
-    if (button_state) {
-      return "Pressed";
-    } else {
-      return "Released";
-    }
+    return button_state ? "Pressed" : "Released";
   }
 };
 
