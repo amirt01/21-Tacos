@@ -23,7 +23,7 @@ enum class States {
 } current_state = States::Asleep;
 
 /* CURRENT ESTIMATES */
-GroundEstimator ground_estimator{};    // [meters per second]
+auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
 float pedal_cadence{};   // [rpm]
 float acceleration{};    // [meters per second per second]
 
