@@ -40,8 +40,8 @@ if __name__ == '__main__':
     # setup ctk
     label_font = ctk.CTkFont('Helvetica', 32)
     for i, (k, v) in enumerate(StringVars.items()):
-        ctk.CTkLabel(root, text=f"{k}: ", font=label_font).grid(row=i, column=0)
-        ctk.CTkLabel(root, textvariable=v, font=label_font).grid(row=i, column=1)
+        ctk.CTkLabel(root, text=f"{k}: ", font=label_font).grid(row=i, column=0, sticky=ctk.E)
+        ctk.CTkLabel(root, textvariable=v, font=label_font).grid(row=i, column=1, sticky=ctk.W)
 
     # start ctk
     root.mainloop()
