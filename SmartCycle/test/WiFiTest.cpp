@@ -38,8 +38,9 @@ void loop() {
     String jsonString = "";
     ArduinoJson::JsonDocument doc;
     ArduinoJson::JsonObject object = doc.to<ArduinoJson::JsonObject>();
-    object["rand1"] = random(100);
-    object["rand2"] = random(100);
+    object["speed"] = random(0, 45);
+    object["cadence"] = random(0, 120);
+    object["gear"] = random(1, 6);
     serializeJson(doc, jsonString);
     Serial.println(jsonString);
     web_socket.broadcastTXT(jsonString);
