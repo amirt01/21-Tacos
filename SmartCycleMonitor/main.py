@@ -77,7 +77,7 @@ class SmartCycleMonitor(ctk.CTk):
         raw_data_text_frame = ctk.CTkFrame(raw_data_frame)
         raw_data_text_frame.grid(row=0, column=1, pady=10, padx=10, sticky="EW")
         self.data_text = ctk.StringVar(value="waiting for data...")
-        ctk.CTkLabel(raw_data_text_frame, textvariable=self.data_text, font=text_font).grid(row=0, column=1, pady=20, padx=20)
+        ctk.CTkLabel(raw_data_text_frame, textvariable=self.data_text, font=text_font).grid(row=0, column=1, pady=10, padx=20)
 
     def connect(self, uri):
         try:
