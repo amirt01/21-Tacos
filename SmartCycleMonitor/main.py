@@ -7,6 +7,8 @@ import json
 import customtkinter as ctk
 from tkdial import Meter, Dial
 
+uri = "ws://192.168.4.1"
+
 
 class SmartCycleMonitor(ctk.CTk):
     def __init__(self):
@@ -26,7 +28,13 @@ class SmartCycleMonitor(ctk.CTk):
         text_font = ctk.CTkFont("DS-Digital", 18)
 
         # Title
-        ctk.CTkLabel(self, text="SmartCycle", font=("ComincSans", 42)).grid(row=0, sticky="EW")
+        header_frame = ctk.CTkFrame(self)
+        header_frame.grid(row=0, sticky="EW")
+        header_frame.columnconfigure(0, weight=1)
+        header_frame.columnconfigure(1, weight=0)
+        ctk.CTkLabel(header_frame, text="SmartCycle", font=("ComincSans", 42)).grid(row=0, column=0, sticky="EW")
+        ctk.CTkButton(header_frame, text="Connect", font=label_font,
+                      command=lambda: self.connect()).grid(row=0, column=1, pady=10, padx=10)
 
         # Meter Frame
         meter_frame = ctk.CTkFrame(self)
@@ -80,16 +88,27 @@ class SmartCycleMonitor(ctk.CTk):
         # Raw Data Text Output
         raw_data_text_frame = ctk.CTkFrame(raw_data_frame)
         raw_data_text_frame.grid(row=0, column=1, pady=10, padx=10, sticky="EW")
-        self.data_text = ctk.StringVar(value="waiting for data...")
-        ctk.CTkLabel(raw_data_text_frame, textvariable=self.data_text, font=text_font).grid(row=0, column=1, pady=10, padx=20)
+        self.data_text = ctk.StringVar(value="Waiting to connect...")
+        ctk.CTkLabel(raw_data_text_frame, textvariable=self.data_text, font=text_font).grid(row=0, column=1, pady=10,
+                                                                                            padx=20)
 
-    def connect(self, uri):
+    def connect(self):
+        self.data_text.set("Connecting...")
+        threading.Thread(target=self.__connect, args=()).start()
+
+    def __connect(self):
         try:
             self.websocket = client.connect(uri)
+            self.listen()
         except TimeoutError:
+            self.data_text.set("Waiting to connect...")
             print("Connection Timeout! Make sure you are connected to the AP and the URI is correct.")
 
-    async def listen(self):
+    def listen(self):
+        self.data_text.set("Listening...")
+        threading.Thread(target=self.__listen).start()
+
+    def __listen(self):
         while True:
             if self.websocket and (buffer := self.websocket.recv()):
                 self.data_text.set(buffer)
@@ -106,7 +125,4 @@ class SmartCycleMonitor(ctk.CTk):
 
 
 if __name__ == '__main__':
-    App = SmartCycleMonitor()
-    App.connect("ws://192.168.4.1")
-    threading.Thread(target=asyncio.run, args=(App.listen(),)).start()
-    App.mainloop()
+    SmartCycleMonitor().mainloop()
