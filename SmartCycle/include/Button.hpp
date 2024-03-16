@@ -23,6 +23,8 @@ class Button {
     pinMode(button_pin, INPUT_PULLUP);
   }
 
+  explicit operator bool() const { return button_state; }
+
   void update() {
     const byte pin_state = digitalRead(button_pin);
 
