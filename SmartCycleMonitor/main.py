@@ -42,7 +42,7 @@ class SmartCycleMonitor(ctk.CTk):
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
                                  text_font="DS-Digital 30", scale_color="white", needle_color="red")
-        self.speedometer.grid(row=1, column=0, padx=20, pady=5)
+        self.speedometer.grid(row=1, column=0, padx=20, pady=(5, 10))
 
         # Cadence Frame
         cadence_frame = ctk.CTkFrame(meter_frame)
@@ -54,7 +54,7 @@ class SmartCycleMonitor(ctk.CTk):
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
                              text_font="DS-Digital 30", scale_color="white", needle_color="red")
-        self.cadence.grid(row=1, column=0, padx=20, pady=5)
+        self.cadence.grid(row=1, column=0, padx=20, pady=(5, 10))
 
         # Gear Frame
         gear_frame = ctk.CTkFrame(meter_frame)
@@ -66,7 +66,7 @@ class SmartCycleMonitor(ctk.CTk):
         # Gear Meter
         self.gear = Meter(gear_frame, border_width=0, fg="#1f6aa5", text_color="white", start=1, end=6,
                           text_font="DS-Digital 30", scale_color="white", needle_color="red")
-        self.gear.grid(row=1, column=0, padx=20, pady=5)
+        self.gear.grid(row=1, column=0, padx=20, pady=(5, 10))
 
         raw_data_frame = ctk.CTkFrame(self)
         raw_data_frame.grid(row=2, sticky="EW")
