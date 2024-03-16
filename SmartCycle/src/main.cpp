@@ -1,67 +1,67 @@
 #include <Arduino.h>
 
+#include "Shifter.hpp"
 #include "GroundEstimator.hpp"
+#include "Button.hpp"
+#include "SmartCycleServer.hpp"
 
 /* PINS */
-static constexpr uint8_t REED_SWITCH_PIN{13};
-static constexpr uint8_t SHIFT_UP_BUTTON_PIN{12};
-static constexpr uint8_t SHIFT_DOWN_BUTTON_PIN{27};
+static constexpr uint8_t REED_SWITCH_PIN{27};
+static constexpr uint8_t UP_SHIFT_BUTTON_PIN{12};
+static constexpr uint8_t DOWN_SHIFT_BUTTON_PIN{13};
 static constexpr uint8_t MOTOR_PIN{18};
-
-/* FLAG VARIABLES */
-// TODO: create button objects for testing
-bool shift_up_button_flag;
-bool shift_down_button_flag;
 
 /* STATES */
 enum class States {
   Asleep,            // Low power mode
   Stopped,           // Waiting to bike again
-  Shifting_Up,       // Shifting to higher gear
-  Shifting_Down,     // Shifting to lower gear
   Biking             // Coasting or Pedaling at constant speed
 } current_state = States::Asleep;
+
+/* Server */
+SmartCycleServer server{};
 
 /* CURRENT ESTIMATES */
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
 float pedal_cadence{};   // [rpm]
-float acceleration{};    // [meters per second per second]
+
+/* SHIFTING */
+Shifter shifter{};
+Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
+Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 
 /* RUN FUNCTIONS */
-void update_shifter(int8_t direction) {  // -1 shifting down; 0 holding; +1 shifting up
-  // TODO: implement this
-}
-
 void update_anticipations() {
   // TODO: implement this
   // anticipate using the camera (i.e. slowing down via stop sign, traffic light, object on road, etc)
 }
 
-bool safe_to_shift();
+void update_server_values();
+
+void log();
+
+[[maybe_unused]] bool safe_to_shift();
 
 void setup() {
   Serial.begin(115200);
 
-  auto setup_switch = [] (const uint8_t pin, void (*ISR)()) {
-    //TODO: test if INPUT_PULLUP is the best pin mode
-    pinMode(pin, INPUT_PULLUP);
-    // TODO: test to see if RISING is the best interrupt mode
-    attachInterrupt(digitalPinToInterrupt(pin), ISR, RISING);
-  };
-
-  setup_switch(REED_SWITCH_PIN, [] { ground_estimator.set_reed_switch_flag(); });
-  setup_switch(SHIFT_UP_BUTTON_PIN, [] { shift_up_button_flag = true; });
-  setup_switch(SHIFT_DOWN_BUTTON_PIN, [] { shift_down_button_flag = true; });
+  server.setup();
+  ground_estimator.setup();
 }
 
 void loop() {
+  up_shift_button.update();
+  down_shift_button.update();
+  ground_estimator.update();
+  update_server_values();
+  server.update();
+
+  log();
+
+  // FIXME: why does the state not switch from Asleep?!
   switch (current_state) {
     case States::Asleep: {
-      if (shift_up_button_flag) {
-        shift_up_button_flag = false;
-        current_state = States::Stopped;
-      } else if (shift_down_button_flag) {
-        shift_down_button_flag = false;
+      if (up_shift_button || down_shift_button) {
         current_state = States::Stopped;
       } else if (ground_estimator.get_speed() > 0.1) {
         current_state = States::Biking;
@@ -73,57 +73,49 @@ void loop() {
         current_state = States::Biking;
       }
 
-      update_shifter(0);
-      break;
-    }
-    case States::Shifting_Up: {
-      update_anticipations();
-      if (safe_to_shift()) {
-        update_shifter(1);
-      }
-      if (true) {  // TODO: add check for done shifting
-        current_state = States::Biking;
-      }
-      break;
-    }
-    case States::Shifting_Down: {
-      update_anticipations();
-
-      if (safe_to_shift()) {
-        update_shifter(-1);
-      }
-      if (true) {  // TODO: add check for done shifting
-        current_state = States::Biking;
-      }
+      shifter.update();
       break;
     }
     case States::Biking: {
       // TODO: find the stop speed cutoff value
       static constexpr auto STOP_SPEED_CUTOFF{0.1};  // [meters per second]
       if (ground_estimator.get_speed() < STOP_SPEED_CUTOFF) {
+        shifter.reset();
         current_state = States::Stopped;
         break;
       }
 
-      update_anticipations();
-      update_shifter(0);
-
       // TODO: find the value
       static constexpr auto SHIFT_ACCELERATION_CUTOFF{0.5f};   // [meters per second per second]
-      if (shift_up_button_flag) {
-        shift_up_button_flag = false;
-        current_state = States::Shifting_Up;
-      } else if (shift_down_button_flag) {
-        shift_down_button_flag = false;
-        current_state = States::Shifting_Down;
-      } else if (acceleration > SHIFT_ACCELERATION_CUTOFF) {
-        current_state = States::Shifting_Up;
-      } else if (acceleration < -SHIFT_ACCELERATION_CUTOFF) {
-        current_state = States::Shifting_Down;
+      if (up_shift_button || ground_estimator.get_acceleration() > SHIFT_ACCELERATION_CUTOFF) {
+        shifter.shift_up();
+      } else if (down_shift_button || ground_estimator.get_acceleration() < -SHIFT_ACCELERATION_CUTOFF) {
+        shifter.shift_down();
       }
-      break;
+
+      update_anticipations();
+      shifter.update();
     }
   }
+}
+
+void update_server_values() {
+  server.set("speed", ground_estimator.get_speed());
+  server.set("cadence", pedal_cadence);
+  server.set("gear", shifter.current_gear());
+}
+
+void log() {
+  std::string_view state_string;
+  switch(current_state) {
+    case States::Stopped: state_string = "Stopped";
+    case States::Biking: state_string = "Biking";
+    case States::Asleep: state_string = "Asleep";
+  }
+  Serial.printf("State: %s\tUp Button: %s\tDown Button: %s\tSpeed: %f\tCadence: %f\tGear: %i\n",
+                state_string.data(),
+                up_shift_button.get_button_state_string().data(), down_shift_button.get_button_state_string().data(),
+                ground_estimator.get_speed(), pedal_cadence, shifter.current_gear());
 }
 
 bool safe_to_shift() {

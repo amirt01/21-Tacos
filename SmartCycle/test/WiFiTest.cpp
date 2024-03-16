@@ -1,61 +1,24 @@
 //
 // Created by amirt on 3/14/2024.
 //
-#include <Arduino.h>
 
-#include "WiFi.h"
-#include "WebSocketsServer.h"
-#include "ArduinoJson.hpp"
+#include "Arduino.h"
 
-const char* ssid = "SmartCycle";
-const char* password = "bikesmart";
+#include "SmartCycleServer.hpp"
 
-WebSocketsServer web_socket = WebSocketsServer(80);
-void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length);
+SmartCycleServer server;
 
 void setup() {
   Serial.begin(115200);
   Serial.println();
 
-  Serial.print("Setting AP (Access Point)…");
-  WiFi.softAP(ssid, password);
-
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
-
-  web_socket.begin();
-  web_socket.onEvent(web_socket_event);
+  server.setup();
 }
 
 void loop() {
-  web_socket.loop();
+  server.set("speed", random(0, 45));
+  server.set("cadence", random(0, 120));
+  server.set("gear", random(1, 6));
 
-  static unsigned long previous_loop{};
-  if (unsigned long now = millis(); now > previous_loop) {
-    web_socket.broadcastTXT("");
-
-    String jsonString = "";
-    ArduinoJson::JsonDocument doc;
-    ArduinoJson::JsonObject object = doc.to<ArduinoJson::JsonObject>();
-    object["speed"] = random(0, 45);
-    object["cadence"] = random(0, 120);
-    object["gear"] = random(1, 6);
-    serializeJson(doc, jsonString);
-    Serial.println(jsonString);
-    web_socket.broadcastTXT(jsonString);
-
-    previous_loop = now + 500;
-  }
-}
-
-void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length) {
-  switch (type) {
-    case WStype_DISCONNECTED:Serial.println("Client " + String(num) + " disconnected");
-      break;
-    case WStype_CONNECTED:Serial.println("Client " + String(num) + " connected");
-      // optionally you can add code here what to do when connected
-      break;
-    default:break;
-  }
+  server.update();
 }

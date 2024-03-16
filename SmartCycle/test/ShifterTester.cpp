@@ -15,8 +15,6 @@ Shifter shifter{};
 
 int encoder_value = 50;
 
-unsigned long shift_time = 0;
-
 void setup() {
   Serial.begin(115200);
 }
@@ -29,16 +27,10 @@ void loop() {
 
   up_shift_button.update();
   down_shift_button.update();
-  if (millis() > shift_time) {
-    if (up_shift_button.get_button_state()) {
-      Serial.print("Shifting Up!\t");
-      shifter.shift_up();
-      shift_time = millis() + 350;
-    } else if (down_shift_button.get_button_state()) {
-      Serial.print("Shifting Down!\t");
-      shifter.shift_down();
-      shift_time += millis() + 350;
-    }
+  if (up_shift_button.get_button_state()) {
+    shifter.shift_up();
+  } else if (down_shift_button.get_button_state()) {
+    shifter.shift_down();
   }
   Serial.print("\n");
   delay(100);

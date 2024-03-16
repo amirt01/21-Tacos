@@ -5,8 +5,6 @@
 #ifndef SMARTCYCLE_LIB_BUTTON_BUTTON_HPP_
 #define SMARTCYCLE_LIB_BUTTON_BUTTON_HPP_
 
-#include <string>
-
 #include "Arduino.h"
 
 template<int button_pin>
@@ -22,8 +20,6 @@ class Button {
   Button() {
     pinMode(button_pin, INPUT_PULLUP);
   }
-
-  explicit operator bool() const { return button_state; }
 
   void update() {
     const byte pin_state = digitalRead(button_pin);
@@ -41,9 +37,13 @@ class Button {
     last_pin_state = pin_state;
   }
 
-  [[nodiscard]] constexpr bool get_button_state() const noexcept { return button_state; }
+  [[nodiscard]] explicit operator bool() const noexcept { return button_state; }
 
-  [[maybe_unused, nodiscard]] std::string get_button_state_string() const noexcept {
+  [[nodiscard]] constexpr bool state() const noexcept { return button_state; }
+
+  [[nodiscard]] constexpr unsigned long to_str() const noexcept { return press_start_time; };
+
+  [[maybe_unused, nodiscard]] std::string_view get_button_state_string() const noexcept {
     return button_state ? "Pressed" : "Released";
   }
 };

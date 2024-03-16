@@ -8,6 +8,8 @@
 #include <array>
 #include <algorithm>
 
+#include "Arduino.h"
+
 class Shifter {
   /* PHYSICAL CONSTANTS */
   // TODO: find the actual min/max encoder values
@@ -28,11 +30,22 @@ class Shifter {
   int motor_signal{};
 
   /* ESTIMATES */
-  short encoder_value{};  // [encoder range] TODD: find encoder range
+  short encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
 
-  constexpr bool shift(int new_gear) {
-    target_gear = std::clamp(new_gear, MIN_GEAR, MAX_GEAR);
-    return target_gear == new_gear;
+  unsigned long last_shift_time{};
+  unsigned long shift_interval{350};  // time between shift button triggers
+  bool shift(int new_gear) {
+    unsigned long current_time = millis();
+    if (current_time - last_shift_time > shift_interval) {
+      target_gear = std::clamp(new_gear, MIN_GEAR, MAX_GEAR);
+    }
+
+    if (target_gear == new_gear) {
+      last_shift_time = current_time;
+      return true;
+    } else {
+      return false;
+    }
   }
 
  public:
@@ -59,13 +72,15 @@ class Shifter {
     return std::distance(distances_to_encoder_value.cbegin(), closest_nominal_encoder_value_itr) + 1;
   }
 
+  void reset() { target_gear = current_gear(); }
+
   [[nodiscard]] int get_motor_signal() const { return motor_signal; };
 
   void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
 
   // Return if shift successful
-  constexpr bool shift_up() { return shift(target_gear + 1); }
-  constexpr bool shift_down() { return shift(target_gear - 1); }
+  bool shift_up() { return shift(target_gear + 1); }
+  bool shift_down() { return shift(target_gear - 1); }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SHIFTER_HPP_
