@@ -76,29 +76,25 @@ class SmartCycleMonitor(ctk.CTk):
         except TimeoutError:
             print("Connection Timeout! Make sure you are connected to the AP and the URI is correct.")
 
-    def listen(self):
-        if self.websocket:
-            if buffer := self.websocket.recv():
-                self.data_text.set(buffer)
-                for k, v in json.loads(buffer).items():
-                    match k:
-                        case "speed":
-                            self.speedometer.set(v)
-                        case "cadence":
-                            self.cadence.set(v)
-                        case "gear":
-                            self.gear.set(v)
-                        case _:
-                            print("Unrecognized Data")
-
-    def mainloop(self, *args, **kwargs):
+    async def listen(self):
         while True:
-            self.listen()
-            self.update()
+            if self.websocket:
+                if buffer := self.websocket.recv():
+                    self.data_text.set(buffer)
+                    for k, v in json.loads(buffer).items():
+                        match k:
+                            case "speed":
+                                self.speedometer.set(v)
+                            case "cadence":
+                                self.cadence.set(v)
+                            case "gear":
+                                self.gear.set(v)
+                            case _:
+                                print("Unrecognized Data")
 
 
 if __name__ == '__main__':
     App = SmartCycleMonitor()
-    App.update()
     App.connect("ws://192.168.4.1")
+    threading.Thread(target=asyncio.run, args=(App.listen(),)).start()
     App.mainloop()
