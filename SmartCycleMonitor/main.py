@@ -68,12 +68,16 @@ class SmartCycleMonitor(ctk.CTk):
                           text_font="DS-Digital 30", scale_color="white", needle_color="red")
         self.gear.grid(row=1, column=0, padx=20, pady=(5, 10))
 
+        # Raw Data Frame
         raw_data_frame = ctk.CTkFrame(self)
         raw_data_frame.grid(row=2, sticky="EW")
         raw_data_frame.columnconfigure(0, weight=0)
         raw_data_frame.columnconfigure(1, weight=1)
+
+        # Raw Data Label
         ctk.CTkLabel(raw_data_frame, text="Raw Data: ", font=label_font).grid(row=0, column=0, sticky="E", padx=20)
 
+        # Raw Data Text Output
         raw_data_text_frame = ctk.CTkFrame(raw_data_frame)
         raw_data_text_frame.grid(row=0, column=1, pady=10, padx=10, sticky="EW")
         self.data_text = ctk.StringVar(value="waiting for data...")
