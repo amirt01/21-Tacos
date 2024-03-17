@@ -1,11 +1,10 @@
-import sys
 import threading
-import asyncio
+
 from websockets.sync import client
 import json
 
 import customtkinter as ctk
-from tkdial import Meter, Dial
+from tkdial import Meter
 
 uri = "ws://192.168.4.1"
 
@@ -66,15 +65,30 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Gear Frame
         gear_frame = ctk.CTkFrame(meter_frame)
-        gear_frame.grid(row=0, column=2, padx=20, pady=5)
+        gear_frame.grid(row=0, column=2, padx=20, pady=20, sticky="NS")
+        gear_frame.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
+        gear_frame.rowconfigure(0, weight=0)
 
         # Gear Label
-        ctk.CTkLabel(gear_frame, text="Gear", font=label_font).grid(row=0, column=0, pady=5)
+        ctk.CTkLabel(gear_frame, text="Gear", font=label_font).grid(row=0, column=0, columnspan=3, pady=5, padx=20,
+                                                                    sticky="N")
 
-        # Gear Meter
-        self.gear = Meter(gear_frame, border_width=0, fg="#1f6aa5", text_color="white", start=1, end=6,
-                          text_font="DS-Digital 30", scale_color="white", needle_color="red")
-        self.gear.grid(row=1, column=0, padx=20, pady=(5, 10))
+        # Gear Slider
+        self.target_gear = ctk.CTkSlider(gear_frame, from_=1, to=6, orientation=ctk.VERTICAL, state=ctk.DISABLED,
+                                         width=25, height=200, button_corner_radius=6, number_of_steps=5,
+                                         progress_color="transparent")
+        self.target_gear.grid(row=1, column=0, padx=(20, 0), pady=5, sticky="NS", rowspan=6)
+        self.gear = ctk.CTkSlider(gear_frame, from_=1, to=6, orientation=ctk.VERTICAL, state=ctk.DISABLED,
+                                  width=25, height=200, button_corner_radius=6, number_of_steps=5,
+                                  progress_color="transparent")
+        self.gear.grid(row=1, column=1, padx=(5, 0), pady=5, sticky="NS", rowspan=6)
+        self.gear.set(3)
+        self.target_gear.set(3)
+
+        # Slider Indices
+        for i in range(6):
+            label = ctk.CTkLabel(gear_frame, text=str(6 - i), font=text_font)
+            label.grid(row=i + 1, column=2, sticky="W", padx=(5, 20))
 
         # Raw Data Frame
         raw_data_frame = ctk.CTkFrame(self)
@@ -88,12 +102,11 @@ class SmartCycleMonitor(ctk.CTk):
         # Raw Data Text Output
         raw_data_text_frame = ctk.CTkFrame(raw_data_frame)
         raw_data_text_frame.grid(row=0, column=1, pady=10, padx=10, sticky="EW")
-        self.data_text = ctk.StringVar(value="Waiting to connect...")
-        ctk.CTkLabel(raw_data_text_frame, textvariable=self.data_text, font=text_font).grid(row=0, column=1, pady=10,
-                                                                                            padx=20)
+        self.raw_data_text = ctk.CTkLabel(raw_data_text_frame, text="Waiting to connect...", font=text_font)
+        self.raw_data_text.grid(row=0, column=1, pady=10, padx=20)
 
     def connect(self):
-        self.data_text.set("Connecting...")
+        self.raw_data_text.configure(text="Connecting...")
         threading.Thread(target=self.__connect, args=()).start()
 
     def __connect(self):
@@ -101,27 +114,32 @@ class SmartCycleMonitor(ctk.CTk):
             self.websocket = client.connect(uri)
             self.listen()
         except TimeoutError:
-            self.data_text.set("Waiting to connect...")
+            self.raw_data_text.configure(text="Waiting to connect...")
             print("Connection Timeout! Make sure you are connected to the AP and the URI is correct.")
 
     def listen(self):
-        self.data_text.set("Listening...")
+        self.raw_data_text.configure(text="Listening...")
         threading.Thread(target=self.__listen).start()
 
     def __listen(self):
         while True:
             if self.websocket and (buffer := self.websocket.recv()):
-                self.data_text.set(buffer)
+                self.raw_data_text.configure(text=buffer)
                 for k, v in json.loads(buffer).items():
                     match k:
                         case "speed":
                             self.speedometer.set(v)
                         case "cadence":
                             self.cadence.set(v)
+                        case "target gear":
+                            self.target_gear.set(v)
                         case "gear":
                             self.gear.set(v)
+                        case "state":
+                            pass
                         case _:
                             print("Unrecognized Data")
+                # time.sleep(0.1)
 
 
 if __name__ == '__main__':

@@ -72,6 +72,8 @@ class Shifter {
     return std::distance(distances_to_encoder_value.cbegin(), closest_nominal_encoder_value_itr) + 1;
   }
 
+  [[nodiscard]] int get_target_gear() const { return target_gear; }
+
   void reset() { target_gear = current_gear(); }
 
   [[nodiscard]] int get_motor_signal() const { return motor_signal; };
