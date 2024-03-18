@@ -17,7 +17,7 @@ class SmartCycleServer {
 
   ArduinoJson::JsonDocument j_doc{};
   ArduinoJson::JsonObject j_object{j_doc.to<ArduinoJson::JsonObject>()};
-  char j_str[128]{};
+  char j_str[256]{};
 
   static void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length) {
     switch (type) {
@@ -46,7 +46,8 @@ class SmartCycleServer {
   }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
-  void set(std::string_view key, auto value) { j_object[key] = value; }
+  template<typename T>
+  void set(std::string_view key, T value) { j_object[key] = value; }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_

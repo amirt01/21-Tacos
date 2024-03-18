@@ -23,6 +23,7 @@ std::string_view state_str() {
     case States::Stopped: return "Stopped";
     case States::Biking: return "Biking";
     case States::Asleep: return "Asleep";
+    default: return "wtf...";
   }
 }
 
@@ -64,11 +65,11 @@ void loop() {
   update_server_values();
   server.update();
 
-//  log();
+  log();
 
   switch (current_state) {
     case States::Asleep: {
-      Serial.println("Asleep");
+//      Serial.println("Asleep");
       if (up_shift_button || down_shift_button) {
         current_state = States::Stopped;
       } else if (ground_estimator.get_speed() > 0.1) {
@@ -77,7 +78,7 @@ void loop() {
       break;
     }
     case States::Stopped: {
-      Serial.println("Stopped");
+//      Serial.println("Stopped");
       if (ground_estimator.get_speed() > 0.1) {
         current_state = States::Biking;
       }
@@ -86,7 +87,7 @@ void loop() {
       break;
     }
     case States::Biking: {
-      Serial.println("Biking");
+//      Serial.println("Biking");
       // TODO: find the stop speed cutoff value
       static constexpr auto STOP_SPEED_CUTOFF{0.1};  // [meters per second]
       if (ground_estimator.get_speed() < STOP_SPEED_CUTOFF) {
@@ -102,9 +103,6 @@ void loop() {
       } else if (down_shift_button) {
         shifter.shift_down();
       }
-
-      update_anticipations();
-      shifter.update();
     }
   }
 }
@@ -112,15 +110,17 @@ void loop() {
 void update_server_values() {
   server.set("speed", ground_estimator.get_speed());
   server.set("cadence", pedal_cadence);
-  server.set("target gear", shifter.get_target_gear());
-  server.set("gear", shifter.current_gear());
+  server.set("target gear", 2);  //shifter.get_target_gear());
+  server.set("current gear", 3);  //shifter.current_gear());
   server.set("state", state_str());
+  server.set("up shift button", up_shift_button.to_str());
+  server.set("down shift button", down_shift_button.to_str());
 }
 
 void log() {
   Serial.printf("State: %s\tUp Button: %s\tDown Button: %s\tSpeed: %f\tCadence: %f\tGear: %i\n",
                 state_str().data(),
-                up_shift_button.get_button_state_string().data(), down_shift_button.get_button_state_string().data(),
+                up_shift_button.to_str().data(), down_shift_button.to_str().data(),
                 ground_estimator.get_speed(), pedal_cadence, shifter.current_gear());
 }
 

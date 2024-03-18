@@ -41,9 +41,9 @@ class Button {
 
   [[nodiscard]] constexpr bool state() const noexcept { return button_state; }
 
-  [[nodiscard]] constexpr unsigned long to_str() const noexcept { return press_start_time; };
+  [[nodiscard]] constexpr unsigned long get_press_start_time() const noexcept { return press_start_time; };
 
-  [[maybe_unused, nodiscard]] std::string_view get_button_state_string() const noexcept {
+  [[maybe_unused, nodiscard]] std::string_view to_str() const noexcept {
     return button_state ? "Pressed" : "Released";
   }
 };
