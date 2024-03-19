@@ -63,9 +63,12 @@ void loop() {
   down_shift_button.update();
   ground_estimator.update();
   update_server_values();
-  server.update();
-
-  log();
+  static unsigned long last_pub_time{0};
+  if (millis() - last_pub_time > 250) {
+    last_pub_time = millis();
+    server.update();
+    log();
+  }
 
   switch (current_state) {
     case States::Asleep: {
@@ -110,18 +113,20 @@ void loop() {
 void update_server_values() {
   server.set("speed", ground_estimator.get_speed());
   server.set("cadence", pedal_cadence);
-  server.set("target gear", 2);  //shifter.get_target_gear());
-  server.set("current gear", 3);  //shifter.current_gear());
+  server.set("target gear", shifter.get_target_gear());
+  server.set("current gear", shifter.current_gear());
   server.set("state", state_str());
   server.set("up shift button", up_shift_button.to_str());
   server.set("down shift button", down_shift_button.to_str());
 }
 
 void log() {
-  Serial.printf("State: %s\tUp Button: %s\tDown Button: %s\tSpeed: %f\tCadence: %f\tGear: %i\n",
+  Serial.printf("State: %s\tUp Button: %s\tDown Button: %s\tSpeed: %f\tCadence: %f\tCurrent Gear: %i\t"
+                "Target Gear: %i\n",
                 state_str().data(),
                 up_shift_button.to_str().data(), down_shift_button.to_str().data(),
-                ground_estimator.get_speed(), pedal_cadence, shifter.current_gear());
+                ground_estimator.get_speed(), pedal_cadence, shifter.current_gear(),
+                shifter.get_target_gear());
 }
 
 bool safe_to_shift() {
