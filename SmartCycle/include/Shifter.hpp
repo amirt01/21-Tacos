@@ -34,7 +34,15 @@ class Shifter {
 
   unsigned long last_shift_time{};
   unsigned long shift_interval{350};  // time between shift button triggers
-  bool shift(int new_gear) {
+  bool shift(int direction) {
+    // don't shift past 1 away from the current gear
+    const auto current_shift_direction = target_gear - current_gear();
+    if (current_shift_direction == direction) {
+      return false;
+    }
+    const auto new_gear = target_gear + direction;
+
+    // don't shift if we have shifted recently
     unsigned long current_time = millis();
     if (current_time - last_shift_time > shift_interval) {
       target_gear = std::clamp(new_gear, MIN_GEAR, MAX_GEAR);
@@ -76,8 +84,8 @@ class Shifter {
   void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
 
   // Return if shift successful
-  bool shift_up() { return shift(target_gear + 1); }
-  bool shift_down() { return shift(target_gear - 1); }
+  bool shift_up() { return shift(+1); }
+  bool shift_down() { return shift(-1); }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SHIFTER_HPP_
