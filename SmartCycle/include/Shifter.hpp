@@ -60,16 +60,11 @@ class Shifter {
   }
 
   [[nodiscard]] int current_gear() const {
-    std::array<int, nominal_gear_encoder_values.size()> distances_to_encoder_value{};
-    std::transform(nominal_gear_encoder_values.cbegin(),
-                   nominal_gear_encoder_values.cend(),
-                   distances_to_encoder_value.begin(),
-                   [this](const int a) { return abs(a - encoder_value); });
-
     auto closest_nominal_encoder_value_itr =
-        std::min_element(distances_to_encoder_value.cbegin(), distances_to_encoder_value.cend());
+        std::min_element(nominal_gear_encoder_values.begin(), nominal_gear_encoder_values.end(),
+                         [this](int a, int b) { return abs(a - encoder_value) < abs(b - encoder_value); });
 
-    return std::distance(distances_to_encoder_value.cbegin(), closest_nominal_encoder_value_itr) + 1;
+    return std::distance(nominal_gear_encoder_values.begin(), closest_nominal_encoder_value_itr) + 1;
   }
 
   [[nodiscard]] int get_target_gear() const { return target_gear; }

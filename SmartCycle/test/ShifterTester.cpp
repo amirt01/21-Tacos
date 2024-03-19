@@ -27,9 +27,9 @@ void loop() {
 
   up_shift_button.update();
   down_shift_button.update();
-  if (up_shift_button.get_button_state()) {
+  if (up_shift_button) {
     shifter.shift_up();
-  } else if (down_shift_button.get_button_state()) {
+  } else if (down_shift_button) {
     shifter.shift_down();
   }
   Serial.print("\n");
