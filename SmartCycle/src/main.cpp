@@ -5,6 +5,9 @@
 #include "Button.hpp"
 #include "SmartCycleServer.hpp"
 
+#include <esp_now.h>
+#include <WiFi.h>
+
 /* PINS */
 static constexpr uint8_t REED_SWITCH_PIN{27};
 static constexpr uint8_t UP_SHIFT_BUTTON_PIN{12};
@@ -43,6 +46,19 @@ Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 void update_anticipations() {
   // TODO: implement this
   // anticipate using the camera (i.e. slowing down via stop sign, traffic light, object on road, etc)
+}
+
+// Message Structure for Cadence
+struct Message {
+  float RPM_z;
+} cadence;   
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&cadence, incomingData, sizeof(cadence));
+  //Serial.print("Bytes received: ");
+  //Serial.println(len);
+  Serial.println(cadence.RPM_z);
 }
 
 void update_server_values();
