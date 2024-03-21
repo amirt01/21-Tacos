@@ -16,7 +16,6 @@ class SmartCycleServer {
   WebSocketsServer web_socket = WebSocketsServer(80);
 
   ArduinoJson::JsonDocument j_doc{};
-  ArduinoJson::JsonObject j_object{j_doc.to<ArduinoJson::JsonObject>()};
   char j_str[256]{};
 
   static void web_socket_event(byte num, WStype_t type, uint8_t* payload, size_t length) {
@@ -24,7 +23,6 @@ class SmartCycleServer {
       case WStype_DISCONNECTED:Serial.println("Client " + String(num) + " disconnected");
         break;
       case WStype_CONNECTED:Serial.println("Client " + String(num) + " connected");
-        // optionally you can add code here what to do when connected
         break;
       default:break;
     }
@@ -32,6 +30,7 @@ class SmartCycleServer {
 
  public:
   void setup() {
+    WiFi.mode(WIFI_AP_STA);
     WiFi.softAP(ssid, password);
 
     web_socket.begin();
@@ -40,14 +39,17 @@ class SmartCycleServer {
 
   void update() {
     web_socket.loop();
-
     web_socket.broadcastTXT(j_str, serializeJson(j_doc, j_str));
-    j_doc.clear();
   }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
   template<typename T>
-  void set(std::string_view key, T value) { j_object[key] = value; }
+  void set(std::string_view key, T value) { j_doc[key] = value; }
+
+  template<typename T>
+  [[nodiscard]] T get(std::string_view key) const { return j_doc[key]; }
+
+  void remove(std::string_view key) { j_doc.remove(key); }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
