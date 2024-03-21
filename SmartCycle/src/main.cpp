@@ -71,6 +71,16 @@ void setup() {
   Serial.begin(115200);
 
   server.setup();
+  
+  // Init ESP-NOW
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  
+  // Once ESPNow is successfully Init, we will register for recv CB 
+  esp_now_register_recv_cb(OnDataRecv);
+  
   ground_estimator.setup();
 }
 
