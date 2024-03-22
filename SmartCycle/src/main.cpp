@@ -6,9 +6,6 @@
 #include "Button.hpp"
 #include "SmartCycleServer.hpp"
 
-#include <esp_now.h>
-#include <WiFi.h>
-
 /* PINS */
 static constexpr uint8_t REED_SWITCH_PIN{27};
 static constexpr uint8_t UP_SHIFT_BUTTON_PIN{12};
