@@ -7,13 +7,13 @@
 #include "SmartCycleServer.hpp"
 #include "Timer.hpp"
 
-/* PINS */
+/** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
 static constexpr uint8_t UP_SHIFT_BUTTON_PIN{12};
 static constexpr uint8_t DOWN_SHIFT_BUTTON_PIN{13};
 static constexpr uint8_t MOTOR_PIN{18};
 
-/* STATES */
+/** STATES **/
 enum class States {
   Asleep,            // Low power mode
   Stopped,           // Waiting to bike again
@@ -29,20 +29,21 @@ std::string_view state_str() {
   }
 }
 
-/* Server */
+/** Server **/
 SmartCycleServer server{};
 void update_server();
 Timer server_publisher(500, update_server);
 
-/* CURRENT ESTIMATES */
+/** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
 float cadence;
 
-/* SHIFTING */
+/** SHIFTING **/
 Shifter shifter{};
 Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 
+/** RUN FUNCTIONS **/
 [[maybe_unused]] void log();
 
 [[maybe_unused]] bool safe_to_shift();
@@ -51,8 +52,6 @@ void setup() {
   Serial.begin(115200);
 
   server.setup();
-
-  // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
