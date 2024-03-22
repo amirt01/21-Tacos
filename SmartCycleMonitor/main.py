@@ -114,9 +114,9 @@ class SmartCycleMonitor(ctk.CTk):
         for k, v in j_obj.items():
             match k:
                 case "speed":
-                    self.speedometer.set(v)
+                    self.speedometer.set(round(v))
                 case "cadence":
-                    self.cadence.set(v)
+                    self.cadence.set(round(v))
                 case "target gear":
                     self.target_gear.set(v)
                 case "current gear":
