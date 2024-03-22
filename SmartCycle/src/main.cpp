@@ -36,24 +36,12 @@ Timer server_publisher(500, update_server);
 
 /* CURRENT ESTIMATES */
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
+float cadence;
 
 /* SHIFTING */
 Shifter shifter{};
 Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
-
-/* RUN FUNCTIONS */
-// Message Structure for Cadence
-float cadence;
-
-// callback function that will be executed when data is received
-void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) {
-  if (len == sizeof(cadence)) {
-    memcpy(&cadence, incomingData, len);
-  } else {
-    Serial.printf("ERROR: Package is size: %i, but should be size: %i\n", len, sizeof(cadence));
-  }
-}
 
 [[maybe_unused]] void log();
 
@@ -69,9 +57,7 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
-
-  // Once ESPNow is successfully Init, we will register for recv CB 
-  esp_now_register_recv_cb(OnDataRecv);
+  esp_now_register_recv_cb([](const uint8_t*, const uint8_t* data, int data_len) { memcpy(&cadence, data, data_len); });
 
   ground_estimator.setup();
 }
