@@ -35,8 +35,8 @@ void update_server();
 Timer server_publisher(500, update_server);
 
 /** CURRENT ESTIMATES **/
-auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
-float cadence;
+auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();    // [meters per second]
+float cadence{};
 
 /** SHIFTING **/
 Shifter shifter{};

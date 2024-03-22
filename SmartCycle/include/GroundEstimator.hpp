@@ -34,14 +34,14 @@ class GroundEstimator {
   GroundEstimator(GroundEstimator const&) = delete;
   void operator=(GroundEstimator const&) = delete;
 
-  static GroundEstimator& get_ground_estimator() {
+  static GroundEstimator& get_instance() {
     static GroundEstimator ge{};
     return ge;
   }
 
   void setup() {
     attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
-                    [] { GroundEstimator::get_ground_estimator().reed_switch_flag = true; },
+                    [] { GroundEstimator::get_instance().reed_switch_flag = true; },
                     RISING);
   }
 
