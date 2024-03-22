@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "esp_now.h"
 
 #include "Shifter.hpp"
 #include "GroundEstimator.hpp"
@@ -22,7 +23,7 @@ enum class States {
 } current_state;
 
 std::string_view state_str() {
-  switch(current_state) {
+  switch (current_state) {
     case States::Stopped: return "Stopped";
     case States::Biking: return "Biking";
     case States::Asleep: return "Asleep";
@@ -35,7 +36,6 @@ SmartCycleServer server{};
 
 /* CURRENT ESTIMATES */
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
-float pedal_cadence{};   // [rpm]
 
 /* SHIFTING */
 Shifter shifter{};
@@ -49,21 +49,20 @@ void update_anticipations() {
 }
 
 // Message Structure for Cadence
-struct Message {
-  float RPM_z;
-} cadence;   
+float cadence;
 
 // callback function that will be executed when data is received
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  memcpy(&cadence, incomingData, sizeof(cadence));
-  //Serial.print("Bytes received: ");
-  //Serial.println(len);
-  Serial.println(cadence.RPM_z);
+void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+  if (len == sizeof(cadence)) {
+    memcpy(&cadence, incomingData, len);
+  } else {
+    Serial.printf("ERROR: Package is size: %i, but should be size: %i\n", len, sizeof(cadence));
+  }
 }
 
 void update_server_values();
 
-void log();
+[[maybe_unused]] void log();
 
 [[maybe_unused]] bool safe_to_shift();
 
@@ -71,16 +70,16 @@ void setup() {
   Serial.begin(115200);
 
   server.setup();
-  
+
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
-  
+
   // Once ESPNow is successfully Init, we will register for recv CB 
   esp_now_register_recv_cb(OnDataRecv);
-  
+
   ground_estimator.setup();
 }
 
@@ -90,15 +89,13 @@ void loop() {
   ground_estimator.update();
   update_server_values();
   static unsigned long last_pub_time{0};
-  if (millis() - last_pub_time > 250) {
+  if (millis() - last_pub_time > 500) {
     last_pub_time = millis();
     server.update();
-    log();
   }
 
   switch (current_state) {
     case States::Asleep: {
-//      Serial.println("Asleep");
       if (up_shift_button || down_shift_button) {
         current_state = States::Stopped;
       } else if (ground_estimator.get_speed() > 0.1) {
@@ -107,7 +104,6 @@ void loop() {
       break;
     }
     case States::Stopped: {
-//      Serial.println("Stopped");
       if (ground_estimator.get_speed() > 0.1) {
         current_state = States::Biking;
       }
@@ -116,7 +112,6 @@ void loop() {
       break;
     }
     case States::Biking: {
-//      Serial.println("Biking");
       // TODO: find the stop speed cutoff value
       static constexpr auto STOP_SPEED_CUTOFF{0.1};  // [meters per second]
       if (ground_estimator.get_speed() < STOP_SPEED_CUTOFF) {
@@ -137,13 +132,21 @@ void loop() {
 }
 
 void update_server_values() {
-  server.set("speed", ground_estimator.get_speed());
-  server.set("cadence", pedal_cadence);
-  server.set("target gear", shifter.get_target_gear());
-  server.set("current gear", shifter.current_gear());
-  server.set("state", state_str());
-  server.set("up shift button", up_shift_button.to_str());
-  server.set("down shift button", down_shift_button.to_str());
+  auto update_if_new = [](std::string_view key, auto value) {
+    if (server.get<decltype(value)>(key) != value) {
+      server.set(key, value);
+    } else {
+      //TODO: remove old values
+    }
+  };
+
+  update_if_new("speed", ground_estimator.get_speed());
+  update_if_new("cadence", cadence);
+  update_if_new("target gear", shifter.get_target_gear());
+  update_if_new("current gear", shifter.current_gear());
+  update_if_new("state", state_str());
+  update_if_new("up shift button", up_shift_button.to_str());
+  update_if_new("down shift button", down_shift_button.to_str());
 }
 
 void log() {
@@ -151,12 +154,12 @@ void log() {
                 "Target Gear: %i\n",
                 state_str().data(),
                 up_shift_button.to_str().data(), down_shift_button.to_str().data(),
-                ground_estimator.get_speed(), pedal_cadence, shifter.current_gear(),
+                ground_estimator.get_speed(), cadence, shifter.current_gear(),
                 shifter.get_target_gear());
 }
 
 bool safe_to_shift() {
   // TODO: find the value to enable shifting
   static constexpr auto SHIFT_PEDAL_CADENCE_CUTOFF{0.5f};  // [rpm]
-  return pedal_cadence < SHIFT_PEDAL_CADENCE_CUTOFF;  // only shift while pedaling
+  return cadence < SHIFT_PEDAL_CADENCE_CUTOFF;  // only shift while pedaling
 }
