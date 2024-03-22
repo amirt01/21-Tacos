@@ -35,7 +35,7 @@ Timer server_publisher(500, update_server);
 auto& server = SmartCycleServer::get_instance();
 
 /** CURRENT ESTIMATES **/
-auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();    // [meters per second]
+auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
 float cadence{};
 
 /** SHIFTING **/
