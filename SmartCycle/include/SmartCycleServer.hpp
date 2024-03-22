@@ -28,7 +28,17 @@ class SmartCycleServer {
     }
   }
 
+  SmartCycleServer() = default;
+
  public:
+  SmartCycleServer(SmartCycleServer const&) = delete;
+  void operator=(SmartCycleServer const&) = delete;
+
+  static SmartCycleServer& get_instance() {
+    static SmartCycleServer scs{};
+    return scs;
+  }
+
   void setup() {
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAP(ssid, password);

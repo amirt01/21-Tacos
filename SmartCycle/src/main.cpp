@@ -30,9 +30,9 @@ std::string_view state_str() {
 }
 
 /** Server **/
-SmartCycleServer server{};
 void update_server();
 Timer server_publisher(500, update_server);
+auto& server = SmartCycleServer::get_instance();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();    // [meters per second]
