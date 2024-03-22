@@ -37,7 +37,7 @@ class SmartCycleServer {
     web_socket.onEvent(web_socket_event);
   }
 
-  void update() {
+  void loop() {
     web_socket.loop();
     web_socket.broadcastTXT(j_str, serializeJson(j_doc, j_str));
   }

@@ -21,7 +21,7 @@ class Button {
     pinMode(button_pin, INPUT_PULLUP);
   }
 
-  void update() {
+  void loop() {
     const byte pin_state = digitalRead(button_pin);
 
     if (pin_state == HIGH) {

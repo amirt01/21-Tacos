@@ -5,6 +5,7 @@
 #include "GroundEstimator.hpp"
 #include "Button.hpp"
 #include "SmartCycleServer.hpp"
+#include "Timer.hpp"
 
 /* PINS */
 static constexpr uint8_t REED_SWITCH_PIN{27};
@@ -30,6 +31,8 @@ std::string_view state_str() {
 
 /* Server */
 SmartCycleServer server{};
+void update_server();
+Timer server_publisher(500, update_server);
 
 /* CURRENT ESTIMATES */
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_ground_estimator();    // [meters per second]
@@ -40,11 +43,6 @@ Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 
 /* RUN FUNCTIONS */
-void update_anticipations() {
-  // TODO: implement this
-  // anticipate using the camera (i.e. slowing down via stop sign, traffic light, object on road, etc)
-}
-
 // Message Structure for Cadence
 float cadence;
 
@@ -56,8 +54,6 @@ void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) {
     Serial.printf("ERROR: Package is size: %i, but should be size: %i\n", len, sizeof(cadence));
   }
 }
-
-void update_server_values();
 
 [[maybe_unused]] void log();
 
@@ -81,15 +77,10 @@ void setup() {
 }
 
 void loop() {
-  up_shift_button.update();
-  down_shift_button.update();
-  ground_estimator.update();
-  update_server_values();
-  static unsigned long last_pub_time{0};
-  if (millis() - last_pub_time > 500) {
-    last_pub_time = millis();
-    server.update();
-  }
+  up_shift_button.loop();
+  down_shift_button.loop();
+  ground_estimator.loop();
+  server_publisher.loop();
 
   switch (current_state) {
     case States::Asleep: {
@@ -105,7 +96,7 @@ void loop() {
         current_state = States::Biking;
       }
 
-      shifter.update();
+      shifter.loop();
       break;
     }
     case States::Biking: {
@@ -124,11 +115,13 @@ void loop() {
       } else if (down_shift_button) {
         shifter.shift_down();
       }
+
+      shifter.loop();
     }
   }
 }
 
-void update_server_values() {
+void update_server() {
   auto update_if_new = [](std::string_view key, auto value) {
     if (server.get<decltype(value)>(key) != value) {
       server.set(key, value);
@@ -144,6 +137,8 @@ void update_server_values() {
   update_if_new("state", state_str());
   update_if_new("up shift button", up_shift_button.to_str());
   update_if_new("down shift button", down_shift_button.to_str());
+
+  server.loop();
 }
 
 void log() {

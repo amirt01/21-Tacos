@@ -57,7 +57,7 @@ class Shifter {
   }
 
  public:
-  void update() {
+  void loop() {
     // PID towards the target gear
     const int encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder_value;
 

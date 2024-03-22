@@ -45,7 +45,7 @@ class GroundEstimator {
                     RISING);
   }
 
-  void update() {
+  void loop() {
     /* PHYSICAL CONSTANTS */
     static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
     static constexpr float PI_F{M_PI};
