@@ -14,9 +14,6 @@
 
 template<int reed_switch_pin>
 class GroundEstimator {
-  /* Flags */
-  volatile bool reed_switch_flag{};
-
   /* TIMING */
   unsigned long last_reed_time{};
   unsigned long last_update_time{};
@@ -25,6 +22,32 @@ class GroundEstimator {
   float spr{infinityf()};  // seconds per revolution
   float speed{};           // [mps]
   float acceleration{};    // [mps2]
+
+  void update_estimates(const unsigned long current_time) {
+    /* PHYSICAL CONSTANTS */
+    static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
+    static constexpr float PI_F{M_PI};
+
+    spr = current_time - last_reed_time;
+
+    // FIXME: divide by zero if spr or is zero
+    const auto ds = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / spr) - speed);
+    const auto dt = current_time - last_update_time;
+
+    acceleration = ds / dt;
+    last_update_time = current_time;
+  }
+
+  void ISR() {
+    // TODO: find the optimal debounce time
+    static constexpr auto DEBOUNCE_TIME{50};
+
+    const auto current_time = millis();
+    if (current_time - last_reed_time > DEBOUNCE_TIME) {
+      last_reed_time = current_time;
+      update_estimates(current_time);
+    }
+  }
 
   GroundEstimator() {
     pinMode(reed_switch_pin, INPUT_PULLUP);
@@ -41,42 +64,14 @@ class GroundEstimator {
 
   void setup() {
     attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
-                    [] { GroundEstimator::get_instance().reed_switch_flag = true; },
+                    [] { GroundEstimator::get_instance().ISR(); },
                     FALLING);
   }
 
   void loop() {
-    /* PHYSICAL CONSTANTS */
-    static constexpr float WHEEL_DIAMETER{0.7f};  // [meters] wheels are 700mm
-    static constexpr float PI_F{M_PI};
-    static constexpr float us_to_s{1e-6f};
-
-    unsigned long current_time = micros();
-    const auto time_since_last_reed = float(current_time - last_reed_time) * us_to_s;  // [s]
-
-    auto update_estimates = [this, current_time, time_since_last_reed] {
-      spr = time_since_last_reed;
-
-      // FIXME: divide by zero if spr or is zero
-      const auto ds = -(std::exchange(speed, WHEEL_DIAMETER * PI_F / spr) - speed);
-      const auto dt = float(current_time - last_update_time) * us_to_s;
-
-      acceleration = ds / dt;
-      last_update_time = current_time;
-    };
-
-    // TODO: look for a cleaner logic flow
-    if (!reed_switch_flag) {
-      if (time_since_last_reed > spr) {
-        update_estimates();
-      }
-      // TODO: find the optimal debounce time
-    } else {
-      reed_switch_flag = false;
-      if (static constexpr float DEBOUNCE_TIME{0.1f}; time_since_last_reed > DEBOUNCE_TIME) {
-        last_reed_time = current_time;
-        update_estimates();
-      }
+    const auto current_time = millis();
+    if (current_time - last_reed_time > spr) {
+      update_estimates(current_time);
     }
   }
 

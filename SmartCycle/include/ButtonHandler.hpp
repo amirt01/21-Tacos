@@ -9,8 +9,6 @@
 
 template<int button_pin>
 class ButtonHandler {
-  // TODO: measure the optimal debounce_time
-  static constexpr auto debounce_time{50};  // [ms]
 
   // Pin state tracking variables
   bool button_pressed{};
@@ -18,6 +16,9 @@ class ButtonHandler {
 
   void ISR() {
     const bool pin_state = digitalRead(button_pin);
+
+    // TODO: measure the optimal debounce_time
+    static constexpr auto debounce_time{50};  // [ms]
     const auto current_time = millis();
     if (current_time - last_change_time > debounce_time) {
       button_pressed = !pin_state;
