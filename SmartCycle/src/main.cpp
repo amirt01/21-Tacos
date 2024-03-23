@@ -3,7 +3,7 @@
 
 #include "Shifter.hpp"
 #include "GroundEstimator.hpp"
-#include "Button.hpp"
+#include "ButtonHandler.hpp"
 #include "SmartCycleServer.hpp"
 
 /** PINS **/
@@ -38,8 +38,8 @@ float cadence{};
 
 /** SHIFTING **/
 Shifter shifter{};
-Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
-Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
+auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN>::get_instance();
+auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN>::get_instance();
 
 /** RUN FUNCTIONS **/
 [[maybe_unused]] void log();
@@ -62,11 +62,13 @@ void setup() {
 
   /** Setup Ground Estimator **/
   ground_estimator.setup();
+
+  /** Button Setup **/
+  up_shift_button.setup();
+  down_shift_button.setup();
 }
 
 void loop() {
-  up_shift_button.loop();
-  down_shift_button.loop();
   ground_estimator.loop();
   update_server_values();
   server.loop();
@@ -115,18 +117,18 @@ void update_server_values() {
   server.set("cadence", cadence);
   server.set("target gear", shifter.get_target_gear());
   server.set("current gear", shifter.current_gear());
-  server.set("state", state_str());
-  server.set("up shift button", up_shift_button.to_str());
-  server.set("down shift button", down_shift_button.to_str());
+  server.set("is_pressed", state_str());
+  server.set("up shift button", up_shift_button.status_str());
+  server.set("down shift button", down_shift_button.status_str());
 }
 
 void log() {
   Serial.printf("State: %s\tUp Button: %s\tDown Button: %s\tSpeed: %f\tCadence: %f\tCurrent Gear: %i\t"
                 "Target Gear: %i\n",
                 state_str().data(),
-                up_shift_button.to_str().data(), down_shift_button.to_str().data(),
-                ground_estimator.get_speed(), cadence, shifter.current_gear(),
-                shifter.get_target_gear());
+                up_shift_button.status_str().data(), down_shift_button.status_str().data(),
+                ground_estimator.get_speed(), cadence,
+                shifter.current_gear(), shifter.get_target_gear());
 }
 
 bool safe_to_shift() {
