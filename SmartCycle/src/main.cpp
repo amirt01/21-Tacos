@@ -5,7 +5,6 @@
 #include "GroundEstimator.hpp"
 #include "Button.hpp"
 #include "SmartCycleServer.hpp"
-#include "Timer.hpp"
 
 /** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
@@ -30,9 +29,8 @@ std::string_view state_str() {
 }
 
 /** Server **/
-void update_server();
-Timer server_publisher(500, update_server);
 auto& server = SmartCycleServer::get_instance();
+void update_server_values();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
@@ -51,13 +49,18 @@ Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 void setup() {
   Serial.begin(115200);
 
+  /** Setup Wireless Communications **/
+  WiFiClass::mode(WIFI_AP_STA);
+
   server.setup();
+
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
   esp_now_register_recv_cb([](const uint8_t*, const uint8_t* data, int data_len) { memcpy(&cadence, data, data_len); });
 
+  /** Setup Ground Estimator **/
   ground_estimator.setup();
 }
 
@@ -65,7 +68,8 @@ void loop() {
   up_shift_button.loop();
   down_shift_button.loop();
   ground_estimator.loop();
-  server_publisher.loop();
+  update_server_values();
+  server.loop();
 
   switch (current_state) {
     case States::Asleep: {
@@ -106,24 +110,14 @@ void loop() {
   }
 }
 
-void update_server() {
-  auto update_if_new = [](std::string_view key, auto value) {
-    if (server.get<decltype(value)>(key) != value) {
-      server.set(key, value);
-    } else {
-      //TODO: remove old values
-    }
-  };
-
-  update_if_new("speed", ground_estimator.get_speed());
-  update_if_new("cadence", cadence);
-  update_if_new("target gear", shifter.get_target_gear());
-  update_if_new("current gear", shifter.current_gear());
-  update_if_new("state", state_str());
-  update_if_new("up shift button", up_shift_button.to_str());
-  update_if_new("down shift button", down_shift_button.to_str());
-
-  server.loop();
+void update_server_values() {
+  server.set("speed", ground_estimator.get_speed());
+  server.set("cadence", cadence);
+  server.set("target gear", shifter.get_target_gear());
+  server.set("current gear", shifter.current_gear());
+  server.set("state", state_str());
+  server.set("up shift button", up_shift_button.to_str());
+  server.set("down shift button", down_shift_button.to_str());
 }
 
 void log() {
