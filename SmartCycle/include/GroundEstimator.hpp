@@ -42,7 +42,7 @@ class GroundEstimator {
   void setup() {
     attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
                     [] { GroundEstimator::get_instance().reed_switch_flag = true; },
-                    RISING);
+                    FALLING);
   }
 
   void loop() {
