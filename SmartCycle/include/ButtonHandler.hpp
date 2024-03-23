@@ -9,10 +9,9 @@
 
 template<int button_pin>
 class ButtonHandler {
-
   // Pin state tracking variables
-  bool button_pressed{};
-  unsigned long last_change_time{};
+  volatile bool button_pressed{};
+  volatile unsigned long last_change_time{};
 
   void ISR() {
     const bool pin_state = digitalRead(button_pin);

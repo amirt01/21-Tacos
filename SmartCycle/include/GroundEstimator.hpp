@@ -15,13 +15,13 @@
 template<int reed_switch_pin>
 class GroundEstimator {
   /* TIMING */
-  unsigned long last_reed_time{};
-  unsigned long last_update_time{};
+  volatile unsigned long last_reed_time{};
+  volatile unsigned long last_update_time{};
 
   /* ESTIMATES */
-  float spr{infinityf()};  // seconds per revolution
-  float speed{};           // [mps]
-  float acceleration{};    // [mps2]
+  volatile float spr{infinityf()};  // seconds per revolution
+  volatile float speed{};           // [mps]
+  volatile float acceleration{};    // [mps2]
 
   void update_estimates(const unsigned long current_time) {
     /* PHYSICAL CONSTANTS */
