@@ -32,7 +32,6 @@ class SmartCycleServer {
   static constexpr auto divider = APB_CLK_FREQ / 1e4;  // [Hz]
   static constexpr auto alarm_value = APB_CLK_FREQ / broadcast_frequency / divider;
   hw_timer_s* broadcast_timer_config = timerBegin(0, divider, true);
-  bool broadcast_flag{};
 
   // Broadcast packet initialization
   ArduinoJson::JsonDocument j_doc;
@@ -60,20 +59,16 @@ class SmartCycleServer {
     // Start broadcast timer
     timerAttachInterrupt(
         broadcast_timer_config,
-        [] { SmartCycleServer::get_instance().broadcast_flag = true; },
+        [] {
+          auto& scs = SmartCycleServer::get_instance();
+          scs.web_socket.broadcastTXT(scs.j_str, serializeJson(scs.j_doc, scs.j_str));
+        },
         true);
     timerAlarmWrite(broadcast_timer_config, alarm_value, true);
     timerAlarmEnable(broadcast_timer_config);
   }
 
-  void loop() {
-    web_socket.loop();
-
-    if (broadcast_flag) {
-      web_socket.broadcastTXT(j_str, serializeJson(j_doc, j_str));
-      broadcast_flag = false;
-    }
-  }
+  void loop() { web_socket.loop(); }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
   template<typename T>
