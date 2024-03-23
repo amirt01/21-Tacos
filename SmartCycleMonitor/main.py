@@ -51,7 +51,7 @@ class SmartCycleMonitor(ctk.CTk):
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
                                  text_font="DS-Digital 30", scale_color="white", needle_color="red",
-                                 integer=True)
+                                 integer=True, end=60)
         self.speedometer.grid(row=1, column=0, padx=20, pady=(5, 10))
 
         # Cadence Frame
