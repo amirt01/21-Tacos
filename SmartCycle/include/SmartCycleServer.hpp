@@ -10,20 +10,12 @@
 #include "ArduinoJson.hpp"
 
 class SmartCycleServer {
+  // Access point variables
   static constexpr char ssid[] = "SmartCycle";
   static constexpr char password[] = "bikesmart";
 
+  // Web socket server initialization
   WebSocketsServer web_socket = WebSocketsServer(80);
-
-  hw_timer_s* broadcast_timer_config = timerBegin(0, divider, true);
-  static constexpr auto broadcast_frequency = 5.;  // [Hz]
-  static constexpr auto divider = APB_CLK_FREQ / 1e4;  // [Hz]
-  static constexpr auto alarm_value = APB_CLK_FREQ / broadcast_frequency / divider;
-
-  bool broadcast_flag{};
-
-  ArduinoJson::JsonDocument j_doc;
-  char j_str[256]{};
 
   static void web_socket_event_handler(byte num, WStype_t type, uint8_t*, size_t) {
     switch (type) {
@@ -34,6 +26,17 @@ class SmartCycleServer {
       default:break;
     }
   }
+
+  // Broadcast timer calculations and initialization
+  static constexpr auto broadcast_frequency = 5.;  // [Hz]
+  static constexpr auto divider = APB_CLK_FREQ / 1e4;  // [Hz]
+  static constexpr auto alarm_value = APB_CLK_FREQ / broadcast_frequency / divider;
+  hw_timer_s* broadcast_timer_config = timerBegin(0, divider, true);
+  bool broadcast_flag{};
+
+  // Broadcast packet initialization
+  ArduinoJson::JsonDocument j_doc;
+  char j_str[256]{};
 
   SmartCycleServer() = default;
 
@@ -47,11 +50,14 @@ class SmartCycleServer {
   }
 
   void setup() {
+    // Set up Access Point
     WiFi.softAP(ssid, password);
 
+    // Start web socket handling
     web_socket.begin();
     web_socket.onEvent(web_socket_event_handler);
 
+    // Start broadcast timer
     timerAttachInterrupt(
         broadcast_timer_config,
         [] { SmartCycleServer::get_instance().broadcast_flag = true; },
