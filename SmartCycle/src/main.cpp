@@ -3,7 +3,7 @@
 
 #include "Shifter.hpp"
 #include "GroundEstimator.hpp"
-#include "Button.hpp"
+#include "ButtonHandler.hpp"
 #include "SmartCycleServer.hpp"
 
 /** PINS **/
@@ -70,6 +70,8 @@ void loop() {
   ground_estimator.loop();
   update_server_values();
   server.loop();
+
+  log();
 
   switch (current_state) {
     case States::Asleep: {

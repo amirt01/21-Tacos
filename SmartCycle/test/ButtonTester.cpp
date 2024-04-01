@@ -4,7 +4,7 @@
 
 #include <arduino.h>
 
-#include "Button.hpp"
+#include "ButtonHandler.hpp"
 
 static constexpr uint8_t BUTTON_PIN{13};
 Button<BUTTON_PIN> bh{};

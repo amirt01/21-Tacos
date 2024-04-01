@@ -6,7 +6,7 @@
 
 #include <Shifter.hpp>
 
-#include "Button.hpp"
+#include "ButtonHandler.hpp"
 
 Button<13> up_shift_button{};
 Button<12> down_shift_button{};
