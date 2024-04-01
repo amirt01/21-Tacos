@@ -16,7 +16,7 @@ void setup() {
 }
 
 void loop() {
-  bh.update();
+  bh.loop();
 
-  Serial.printf("%lu\tbutton state: %s\n", millis(), bh.get_button_state_string().c_str());
+  Serial.printf("%lu\tbutton state: %s\n", millis(), bh.to_str().data());
 }
