@@ -1,4 +1,5 @@
-import json
+import SmartCycle_pb2 as SmartCycle
+import sys
 import threading
 
 import customtkinter as ctk
@@ -120,23 +121,15 @@ class SmartCycleMonitor(ctk.CTk):
         config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
         config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
 
-    def on_data(self, ws, packet: str, *_):
-        j_obj = json.loads(packet)
-        self.raw_data_text.configure(text=json.dumps(j_obj, indent=4))
-        for k, v in j_obj.items():
-            match k:
-                case "speed":
-                    self.speedometer.set(v)
-                case "cadence":
-                    self.cadence.set(v)
-                case "target gear":
-                    self.target_gear.set(v)
-                case "current gear":
-                    self.current_gear.set(v)
-                case "state":
-                    pass
-                case _:
-                    pass
+    def on_data(self, ws, packet, *_):
+        print("Data Recieved!")
+        message = SmartCycle.ServerStatus()
+        message.
+        self.raw_data_text.configure(text=message.)
+        self.speedometer.set(message.speed)
+        self.cadence.set(message.cadence)
+        self.target_gear.set(message.target_gear)
+        self.current_gear.set(message.current_gear)
 
 
 if __name__ == '__main__':
