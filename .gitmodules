@@ -7,6 +7,3 @@
 [submodule "SmartCycle/lib/AsyncTCP"]
 	path = SmartCycle/lib/AsyncTCP
 	url = https://github.com/me-no-dev/AsyncTCP.git
-[submodule "SmartCycle/lib/Nanopb"]
-	path = SmartCycle/lib/Nanopb
-	url = https://github.com/nanopb/nanopb.git
