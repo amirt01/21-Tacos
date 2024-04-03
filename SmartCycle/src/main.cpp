@@ -8,7 +8,7 @@
 
 /** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
-static constexpr uint8_t UP_SHIFT_BUTTON_PIN{12};
+static constexpr uint8_t UP_SHIFT_BUTTON_PIN{14};
 static constexpr uint8_t DOWN_SHIFT_BUTTON_PIN{13};
 static constexpr uint8_t MOTOR_PIN{18};
 
