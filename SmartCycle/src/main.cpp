@@ -15,7 +15,7 @@ static constexpr uint8_t LED_PIN{12};
 static constexpr uint8_t MOTOR_PIN{18};
 
 /** STATES **/
-enum class States {
+enum States {
   Asleep,            // Low power mode
   Stopped,           // Waiting to bike again
   Biking             // Coasting or Pedaling at constant speed
@@ -126,13 +126,14 @@ void loop() {
 }
 
 void update_server_values() {
-  server.set("speed", ground_estimator.get_speed());
-  server.set("cadence", cadence);
-  server.set("target gear", shifter.get_target_gear());
-  server.set("current gear", shifter.get_current_gear());
-  server.set("state", state_str());
-  server.set("up shift button", up_shift_button.to_str());
-  server.set("down shift button", down_shift_button.to_str());
+  auto msg = server.get_msg_ref();
+  msg.speed = ground_estimator.get_speed();
+  msg.cadence = cadence;
+  msg.target_gear = shifter.get_target_gear();
+  msg.current_gear = shifter.get_current_gear();
+  msg.state = static_cast<ServerStatus_State>(current_state);
+  msg.up_shift_button = static_cast<ServerStatus_ButtonState>(up_shift_button.state());
+  msg.down_shift_button = static_cast<ServerStatus_ButtonState>(down_shift_button.state());
 }
 
 void update_gear_leds() {

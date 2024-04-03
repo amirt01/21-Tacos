@@ -5,7 +5,14 @@ message ServerStatus {
   float cadence = 2;
   int32 target_gear = 3;
   int32 current_gear = 4;
-  string state = 5;
+
+  enum State {
+    ASLEEP = 0;
+    STOPPED = 1;
+    BIKING = 2;
+  }
+
+  State state = 5;
 
   enum ButtonState {
     RELEASED = 0;
