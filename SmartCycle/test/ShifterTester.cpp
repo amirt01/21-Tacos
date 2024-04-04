@@ -23,7 +23,7 @@ void loop() {
   shifter.set_encoder_value(encoder_value);
   shifter.update();
   encoder_value += ceil(0.1 * shifter.get_motor_signal()) - random(0, 4) + random(0, 4);
-  Serial.printf("current gear: %i\tencoder_value: %i\t", shifter.current_gear(), encoder_value);
+  Serial.printf("current gear: %i\tencoder_value: %i\t", shifter.get_current_gear(), encoder_value);
 
   up_shift_button.update();
   down_shift_button.update();

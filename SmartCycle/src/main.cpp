@@ -5,11 +5,13 @@
 #include "GroundEstimator.hpp"
 #include "ButtonHandler.hpp"
 #include "SmartCycleServer.hpp"
+#include "LEDHandler.hpp"
 
 /** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
 static constexpr uint8_t UP_SHIFT_BUTTON_PIN{14};
 static constexpr uint8_t DOWN_SHIFT_BUTTON_PIN{13};
+static constexpr uint8_t LED_PIN{12};
 static constexpr uint8_t MOTOR_PIN{18};
 
 /** STATES **/
@@ -40,6 +42,10 @@ float cadence{};
 Shifter shifter{};
 Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
+
+/** GEAR LIGHTS **/
+LEDHandler<LED_PIN, 2> gear_leds{};
+void update_gear_leds();
 
 /** RUN FUNCTIONS **/
 [[maybe_unused]] void log();
@@ -87,6 +93,7 @@ void loop() {
         current_state = States::Biking;
       }
 
+      update_gear_leds();
       shifter.loop();
       break;
     }
@@ -107,6 +114,7 @@ void loop() {
         shifter.shift_down();
       }
 
+      update_gear_leds();
       shifter.loop();
     }
   }
@@ -116,10 +124,17 @@ void update_server_values() {
   server.set("speed", ground_estimator.get_speed());
   server.set("cadence", cadence);
   server.set("target gear", shifter.get_target_gear());
-  server.set("current gear", shifter.current_gear());
+  server.set("current gear", shifter.get_current_gear());
   server.set("state", state_str());
   server.set("up shift button", up_shift_button.to_str());
   server.set("down shift button", down_shift_button.to_str());
+}
+
+void update_gear_leds() {
+  gear_leds.clear();
+  gear_leds.set(shifter.get_target_gear() - 1, CRGB::Blue);
+  gear_leds.set_n(shifter.get_current_gear(), CRGB::Green);
+  gear_leds.show();
 }
 
 void log() {
@@ -127,7 +142,7 @@ void log() {
                 "Target Gear: %i\n",
                 state_str().data(),
                 up_shift_button.to_str().data(), down_shift_button.to_str().data(),
-                ground_estimator.get_speed(), cadence, shifter.current_gear(),
+                ground_estimator.get_speed(), cadence, shifter.get_current_gear(),
                 shifter.get_target_gear());
 }
 

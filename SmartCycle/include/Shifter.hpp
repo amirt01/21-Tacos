@@ -36,7 +36,7 @@ class Shifter {
   unsigned long shift_interval{350};  // time between shift button triggers
   bool shift(int direction) {
     // don't shift past 1 away from the current gear
-    const auto current_shift_direction = target_gear - current_gear();
+    const auto current_shift_direction = target_gear - get_current_gear();
     if (current_shift_direction == direction) {
       return false;
     }
@@ -67,7 +67,7 @@ class Shifter {
     motor_signal = encoder_value_error * Kp;
   }
 
-  [[nodiscard]] int current_gear() const {
+  [[nodiscard]] int get_current_gear() const {
     auto closest_nominal_encoder_value_itr =
         std::min_element(nominal_gear_encoder_values.begin(), nominal_gear_encoder_values.end(),
                          [this](int a, int b) { return abs(a - encoder_value) < abs(b - encoder_value); });
@@ -77,7 +77,7 @@ class Shifter {
 
   [[nodiscard]] int get_target_gear() const { return target_gear; }
 
-  void reset() { target_gear = current_gear(); }
+  void reset() { target_gear = get_current_gear(); }
 
   [[nodiscard]] int get_motor_signal() const { return motor_signal; };
 
