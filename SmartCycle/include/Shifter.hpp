@@ -11,11 +11,13 @@
 #include "Arduino.h"
 
 class Shifter {
+ public:
   /* PHYSICAL CONSTANTS */
   // TODO: find the actual min/max encoder values
   static constexpr int MIN_GEAR{1};
   static constexpr int MAX_GEAR{6};
 
+ private:
   // TODO: find the actual nominal encoder values
   static constexpr std::array<int, MAX_GEAR> nominal_gear_encoder_values{
       100,  // first gear

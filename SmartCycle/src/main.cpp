@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include "esp_now.h"
+#include "FastLED.h"
 
 #include "Shifter.hpp"
 #include "GroundEstimator.hpp"
 #include "ButtonHandler.hpp"
 #include "SmartCycleServer.hpp"
-#include "LEDHandler.hpp"
 
 /** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
@@ -43,8 +43,8 @@ Shifter shifter{};
 Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 
-/** GEAR LIGHTS **/
-LEDHandler<LED_PIN, 2> gear_leds{};
+/** GEAR LEDs **/
+std::array<CRGB, Shifter::MAX_GEAR> leds;
 void update_gear_leds();
 
 /** RUN FUNCTIONS **/
@@ -65,6 +65,10 @@ void setup() {
     return;
   }
   esp_now_register_recv_cb([](const uint8_t*, const uint8_t* data, int data_len) { memcpy(&cadence, data, data_len); });
+
+  /** Setup LEDs **/
+  CFastLED::addLeds<WS2813, LED_PIN, GRB>(leds.data(), Shifter::MAX_GEAR);
+  FastLED.clear(true);
 
   /** Setup Ground Estimator **/
   ground_estimator.setup();
@@ -131,10 +135,10 @@ void update_server_values() {
 }
 
 void update_gear_leds() {
-  gear_leds.clear();
-  gear_leds.set(shifter.get_target_gear() - 1, CRGB::Blue);
-  gear_leds.set_n(shifter.get_current_gear(), CRGB::Green);
-  gear_leds.show();
+  FastLED.clear();
+  leds.at(shifter.get_target_gear() - 1) = CRGB::Blue;
+  leds.at(shifter.get_current_gear() - 1) = CRGB::Green;
+  FastLED.show();
 }
 
 void log() {
