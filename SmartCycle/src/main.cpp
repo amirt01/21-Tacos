@@ -44,7 +44,8 @@ Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
 Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
 
 /** GEAR LEDs **/
-std::array<CRGB, Shifter::MAX_GEAR> leds;
+CRGB gear_leds[Shifter::MAX_GEAR]{};
+WS2813<LED_PIN, GRB> gear_led_controller{};
 void update_gear_leds();
 
 /** RUN FUNCTIONS **/
@@ -67,8 +68,8 @@ void setup() {
   esp_now_register_recv_cb([](const uint8_t*, const uint8_t* data, int data_len) { memcpy(&cadence, data, data_len); });
 
   /** Setup LEDs **/
-  CFastLED::addLeds<WS2813, LED_PIN, GRB>(leds.data(), Shifter::MAX_GEAR);
-  FastLED.clear(true);
+  CFastLED::addLeds(&gear_led_controller, gear_leds, Shifter::MAX_GEAR);
+  gear_led_controller.showLeds();
 
   /** Setup Ground Estimator **/
   ground_estimator.setup();
@@ -135,10 +136,10 @@ void update_server_values() {
 }
 
 void update_gear_leds() {
-  FastLED.clear();
-  leds.at(shifter.get_target_gear() - 1) = CRGB::Blue;
-  leds.at(shifter.get_current_gear() - 1) = CRGB::Green;
-  FastLED.show();
+  gear_led_controller.clearLedData();
+  gear_led_controller[shifter.get_target_gear() - 1] = CRGB::Blue;
+  gear_led_controller[shifter.get_current_gear() - 1] = CRGB::Green;
+  gear_led_controller.showLeds();
 }
 
 void log() {

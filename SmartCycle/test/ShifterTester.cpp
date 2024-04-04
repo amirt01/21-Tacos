@@ -14,14 +14,14 @@ Button<14> down_shift_button{};
 
 Shifter shifter{};
 
-CRGB leds[6]{};
+CRGB gear_leds[6]{};
 
 short encoder_value = 50;
 
 void setup() {
   Serial.begin(115200);
 
-  CFastLED::addLeds<WS2813, 12, GRB>(leds, Shifter::MAX_GEAR);
+  CFastLED::addLeds<WS2813, 12, GRB>(gear_leds, Shifter::MAX_GEAR);
   FastLED.clear(true);
 }
 
@@ -41,8 +41,8 @@ void loop() {
   Serial.print("\n");
 
   FastLED.clear();
-  leds[shifter.get_target_gear() - 1] = CRGB::Blue;
-  leds[shifter.get_current_gear() - 1] = CRGB::Green;
+  gear_leds[shifter.get_target_gear() - 1] = CRGB::Blue;
+  gear_leds[shifter.get_current_gear() - 1] = CRGB::Green;
   FastLED.show();
   delay(100);
 }
