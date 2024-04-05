@@ -22,8 +22,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # configure 3 row layout
         self.rowconfigure((0, 1, 2), pad=20)
-        self.columnconfigure((0, 1), pad=20)
-        self.columnconfigure(1)
+        self.columnconfigure((0, 1), pad=20, weight=1)
 
         # Fonts
         title_font = ctk.CTkFont("ComincSans", 42)
@@ -43,10 +42,11 @@ class SmartCycleMonitor(ctk.CTk):
         # Meter Frame
         meter_frame = ctk.CTkFrame(self)
         meter_frame.grid(row=1, column=0, sticky="EW", padx=(0, 5))
+        meter_frame.columnconfigure((0, 1, 2), weight=1)
 
         # Speedometer Frame
         speedometer_frame = ctk.CTkFrame(meter_frame)
-        speedometer_frame.grid(row=0, column=0, padx=10, pady=10, sticky="NS")
+        speedometer_frame.grid(row=0, column=0, padx=(10, 5), pady=10, sticky="NS")
 
         # Speedometer Label
         ctk.CTkLabel(speedometer_frame, text="Speed", font=label_font).grid(row=0, column=0, pady=5)
@@ -72,7 +72,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Gear Frame
         gear_frame = ctk.CTkFrame(meter_frame)
-        gear_frame.grid(row=0, column=2, padx=(10, 10), pady=10, sticky="NS")
+        gear_frame.grid(row=0, column=2, padx=(5, 10), pady=10, sticky="NS")
         gear_frame.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
         gear_frame.rowconfigure(0, weight=0)
 
@@ -97,11 +97,6 @@ class SmartCycleMonitor(ctk.CTk):
             label = ctk.CTkLabel(gear_frame, text=str(6 - i), font=text_font)
             label.grid(row=i + 1, column=2, sticky="W", padx=(7.5, 20))
 
-        config_frame = ctk.CTkFrame(self, width=420)
-        config_frame.grid(row=0, column=1, rowspan=3, sticky="NS", padx=(5, 0), pady=5)
-        config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
-        config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
-
         # Raw Data Frame
         raw_data_frame = ctk.CTkFrame(self)
         raw_data_frame.grid(row=2, sticky="EW", padx=(0, 5))
@@ -117,6 +112,13 @@ class SmartCycleMonitor(ctk.CTk):
         self.raw_data_text = ctk.CTkLabel(raw_data_text_frame, text="Waiting to connect...", font=text_font,
                                           justify="left")
         self.raw_data_text.grid(row=0, column=1, pady=10, padx=(10, 20))
+
+        # Tuning Panel
+        config_frame = ctk.CTkFrame(self, width=420)
+        config_frame.grid(row=0, column=1, rowspan=3, sticky="NS", padx=(5, 0), pady=10)
+
+        config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
+        config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
 
     def on_data(self, ws, packet: str, *_):
         j_obj = json.loads(packet)
