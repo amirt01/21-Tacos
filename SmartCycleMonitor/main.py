@@ -1,5 +1,7 @@
 import SmartCycle_pb2 as SmartCycle
-import sys
+from google.protobuf.message import DecodeError
+from google.protobuf.json_format import MessageToJson
+
 import threading
 
 import customtkinter as ctk
@@ -12,9 +14,10 @@ class SmartCycleMonitor(ctk.CTk):
         super().__init__()
 
         url = "ws://192.168.4.1"
+        self.data = b''
         self.ws_app = websocket.WebSocketApp(
             url,
-            on_data=self.on_data,
+            on_data=lambda ws, msg, *_: self.on_data(ws, msg)
         )
 
         # configure window
@@ -54,7 +57,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
-                                 text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
+                                 text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
                                  integer=True, end=60, end_angle=-300, state=ctk.DISABLED)
         self.speedometer.grid(row=1, column=0, padx=10, pady=(5, 10))
 
@@ -67,7 +70,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
-                             text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
+                             text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
                              integer=True, end_angle=-300, state=ctk.DISABLED)
         self.cadence.grid(row=1, column=0, padx=10, pady=(5, 10))
 
@@ -121,11 +124,25 @@ class SmartCycleMonitor(ctk.CTk):
         config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
         config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
 
-    def on_data(self, ws, packet, *_):
-        print("Data Recieved!")
+    def on_data(self, ws, msg):
+        print("Data Recieved:", msg)
+
+        # record all messages other than the null terminator
+        if msg != b'\x00':
+            self.data += msg
+            return
+
+        # remove
         message = SmartCycle.ServerStatus()
-        message.
-        self.raw_data_text.configure(text=message.)
+
+        try:
+            message.MergeFromString(self.data)
+            self.data = b''
+        except DecodeError:
+            print("Could not decode:", self.data)
+            return
+
+        self.raw_data_text.configure(text=MessageToJson(message))
         self.speedometer.set(message.speed)
         self.cadence.set(message.cadence)
         self.target_gear.set(message.target_gear)
