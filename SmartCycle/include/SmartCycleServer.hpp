@@ -80,11 +80,9 @@ class SmartCycleServer {
 
     if (broadcast_flag) {
       stream.bytes_written = 0;
-      if (!pb_encode(&stream, ServerStatus_fields, &status_msg)) {
+      if (!pb_encode_ex(&stream, ServerStatus_fields, &status_msg, PB_ENCODE_NULLTERMINATED)) {
         Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
       }
-
-      Serial.printf("Sent %i bytes\n", stream.bytes_written);
 
       broadcast_flag = false;
     }
