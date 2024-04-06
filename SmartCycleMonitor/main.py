@@ -15,6 +15,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         url = "ws://192.168.4.1"
         self.data = b''
+        self.message = SmartCycle.ServerStatus()
         self.ws_app = websocket.WebSocketApp(
             url,
             on_data=lambda ws, msg, *_: self.on_data(ws, msg)
@@ -57,7 +58,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
-                                 text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
+                                 text_font="DS-Digital 30", scale_color="white", needle_color="red",  # radius=420,
                                  integer=True, end=60, end_angle=-300, state=ctk.DISABLED)
         self.speedometer.grid(row=1, column=0, padx=10, pady=(5, 10))
 
@@ -70,7 +71,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
-                             text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
+                             text_font="DS-Digital 30", scale_color="white", needle_color="red",  # radius=420,
                              integer=True, end_angle=-300, state=ctk.DISABLED)
         self.cadence.grid(row=1, column=0, padx=10, pady=(5, 10))
 
@@ -131,20 +132,19 @@ class SmartCycleMonitor(ctk.CTk):
             return
 
         # decode the complete message and handle any error
-        message = SmartCycle.ServerStatus()
+        self.message.Clear()
         try:
-            message.ParseFromString(self.data)
-            self.data = b''
+            self.message.ParseFromString(self.data)
         except DecodeError:
             print("Could not decode:", self.data)
-            return
+        self.data = b''
 
         # store the newly decoded data
-        self.raw_data_text.configure(text=MessageToJson(message))
-        self.speedometer.set(message.speed)
-        self.cadence.set(message.cadence)
-        self.target_gear.set(message.target_gear)
-        self.current_gear.set(message.current_gear)
+        self.raw_data_text.configure(text=MessageToJson(self.message))
+        self.speedometer.set(self.message.speed)
+        self.cadence.set(self.message.cadence)
+        self.target_gear.set(self.message.target_gear)
+        self.current_gear.set(self.message.current_gear)
 
 
 if __name__ == '__main__':
