@@ -10,3 +10,6 @@
 [submodule "SmartCycle/lib/FastLED"]
 	path = SmartCycle/lib/FastLED
 	url = https://github.com/FastLED/FastLED.git
+[submodule "SmartCycle/lib/Nanopb"]
+	path = SmartCycle/lib/Nanopb
+	url = https://github.com/nanopb/nanopb
