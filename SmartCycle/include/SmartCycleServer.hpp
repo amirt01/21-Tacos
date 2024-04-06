@@ -5,9 +5,11 @@
 #ifndef SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
 #define SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
 
+#include <pb_encode.h>
+#include "SmartCycle.pb.h"
+
 #include "WiFi.h"
 #include "WebSocketsServer.h"
-#include "ArduinoJson.hpp"
 
 class SmartCycleServer {
   // Access point variables
@@ -35,8 +37,15 @@ class SmartCycleServer {
   bool broadcast_flag{};
 
   // Broadcast packet initialization
-  ArduinoJson::JsonDocument j_doc;
-  char j_str[256]{};
+  ServerStatus status_msg = ServerStatus_init_default;
+  pb_ostream_t stream{
+      [](pb_ostream_t*, const pb_byte_t* buf, size_t count) {
+        return SmartCycleServer::get_instance().web_socket.broadcastBIN(buf, count);
+      },
+      nullptr,
+      SIZE_MAX,
+      0
+  };
 
   SmartCycleServer() = default;
 
@@ -70,14 +79,17 @@ class SmartCycleServer {
     web_socket.loop();
 
     if (broadcast_flag) {
-      web_socket.broadcastTXT(j_str, serializeJson(j_doc, j_str));
+      stream.bytes_written = 0;
+      if (!pb_encode_ex(&stream, ServerStatus_fields, &status_msg, PB_ENCODE_NULLTERMINATED)) {
+        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
+      }
+
       broadcast_flag = false;
     }
   }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
-  template<typename T>
-  void set(std::string_view key, T value) { j_doc[key] = value; }
+  ServerStatus& get_msg_ref() { return status_msg; }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
