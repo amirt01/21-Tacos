@@ -37,9 +37,15 @@ class SmartCycleServer {
   bool broadcast_flag{};
 
   // Broadcast packet initialization
-  ServerStatus status_msg{};
-  uint8_t buffer[126]{};
-  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  ServerStatus status_msg = ServerStatus_init_default;
+  pb_ostream_t stream{
+      [](pb_ostream_t*, const pb_byte_t* buf, size_t count) {
+        return SmartCycleServer::get_instance().web_socket.broadcastBIN(buf, count);
+      },
+      nullptr,
+      SIZE_MAX,
+      0
+  };
 
   SmartCycleServer() = default;
 
@@ -73,12 +79,13 @@ class SmartCycleServer {
     web_socket.loop();
 
     if (broadcast_flag) {
+      stream.bytes_written = 0;
       if (!pb_encode(&stream, ServerStatus_fields, &status_msg)) {
-        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR((&stream)));
-        assert(0);
+        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
       }
 
-      web_socket.broadcastBIN((uint8_t*)stream.state, stream.bytes_written);
+      Serial.printf("Sent %i bytes\n", stream.bytes_written);
+
       broadcast_flag = false;
     }
   }
