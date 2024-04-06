@@ -82,7 +82,7 @@ void loop() {
   update_server_values();
   server.loop();
 
-//  log();
+  log();
 
   switch (current_state) {
     case States::Asleep: {

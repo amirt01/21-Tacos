@@ -57,7 +57,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
-                                 text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
+                                 text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
                                  integer=True, end=60, end_angle=-300, state=ctk.DISABLED)
         self.speedometer.grid(row=1, column=0, padx=10, pady=(5, 10))
 
@@ -70,7 +70,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
-                             text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
+                             text_font="DS-Digital 30", scale_color="white", needle_color="red", #radius=420,
                              integer=True, end_angle=-300, state=ctk.DISABLED)
         self.cadence.grid(row=1, column=0, padx=10, pady=(5, 10))
 
