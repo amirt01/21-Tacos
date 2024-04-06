@@ -39,10 +39,10 @@ class SmartCycleServer {
   // Broadcast packet initialization
   ServerStatus status_msg = ServerStatus_init_default;
   pb_ostream_t stream{
-      [](pb_ostream_t*, const pb_byte_t* buf, size_t count) {
-        return SmartCycleServer::get_instance().web_socket.broadcastBIN(buf, count);
+      [](pb_ostream_t* stream, const pb_byte_t* buf, size_t count) {
+        return static_cast<SmartCycleServer*>(stream->state)->web_socket.broadcastBIN(buf, count);
       },
-      nullptr,
+      this,
       SIZE_MAX,
       0
   };
@@ -80,7 +80,7 @@ class SmartCycleServer {
 
     if (broadcast_flag) {
       stream.bytes_written = 0;
-      if (!pb_encode_ex(&stream, ServerStatus_fields, &status_msg, PB_ENCODE_NULLTERMINATED)) {
+      if (!pb_encode_nullterminated(&stream, ServerStatus_fields, &status_msg)) {
         Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
       }
 

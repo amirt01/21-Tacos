@@ -130,16 +130,16 @@ class SmartCycleMonitor(ctk.CTk):
             self.data += msg
             return
 
-        # remove
+        # decode the complete message and handle any error
         message = SmartCycle.ServerStatus()
-
         try:
-            message.MergeFromString(self.data)
+            message.ParseFromString(self.data)
             self.data = b''
         except DecodeError:
             print("Could not decode:", self.data)
             return
 
+        # store the newly decoded data
         self.raw_data_text.configure(text=MessageToJson(message))
         self.speedometer.set(message.speed)
         self.cadence.set(message.cadence)
