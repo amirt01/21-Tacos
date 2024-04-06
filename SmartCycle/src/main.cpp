@@ -82,7 +82,7 @@ void loop() {
   update_server_values();
   server.loop();
 
-  log();
+//  log();
 
   switch (current_state) {
     case States::Asleep: {
@@ -126,7 +126,7 @@ void loop() {
 }
 
 void update_server_values() {
-  auto msg = server.get_msg_ref();
+  auto& msg = server.get_msg_ref();
   msg.speed = ground_estimator.get_speed();
   msg.cadence = cadence;
   msg.target_gear = shifter.get_target_gear();
