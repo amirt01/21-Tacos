@@ -16,15 +16,15 @@ static constexpr uint8_t MOTOR_PIN{18};
 
 /** STATES **/
 enum class States {
-  Asleep,            // Low power mode
+  Biking,             // Coasting or Pedaling at constant speed
   Stopped,           // Waiting to bike again
-  Biking             // Coasting or Pedaling at constant speed
+  Asleep            // Low power mode
 } current_state;
 
 std::string_view state_str() {
   switch (current_state) {
-    case States::Stopped: return "Stopped";
     case States::Biking: return "Biking";
+    case States::Stopped: return "Stopped";
     case States::Asleep: return "Asleep";
     default: return "wtf...";
   }

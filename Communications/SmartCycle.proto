@@ -7,9 +7,9 @@ message ServerStatus {
   int32 current_gear = 4;
 
   enum State {
-    ASLEEP = 0;
+    BIKING = 0;
     STOPPED = 1;
-    BIKING = 2;
+    ASLEEP = 2;
   }
 
   State state = 5;

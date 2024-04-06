@@ -9,12 +9,12 @@ class ServerStatus(_message.Message):
     __slots__ = ("speed", "cadence", "target_gear", "current_gear", "state", "up_shift_button", "down_shift_button")
     class State(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
-        ASLEEP: _ClassVar[ServerStatus.State]
-        STOPPED: _ClassVar[ServerStatus.State]
         BIKING: _ClassVar[ServerStatus.State]
-    ASLEEP: ServerStatus.State
-    STOPPED: ServerStatus.State
+        STOPPED: _ClassVar[ServerStatus.State]
+        ASLEEP: _ClassVar[ServerStatus.State]
     BIKING: ServerStatus.State
+    STOPPED: ServerStatus.State
+    ASLEEP: ServerStatus.State
     class ButtonState(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         RELEASED: _ClassVar[ServerStatus.ButtonState]

@@ -30,11 +30,11 @@ class SmartCycleServer {
   }
 
   // Broadcast timer calculations and initialization
-  static constexpr auto broadcast_frequency = 5.;  // [Hz]
+  static constexpr auto broadcast_frequency = 10.;  // [Hz]
   static constexpr auto divider = APB_CLK_FREQ / 1e4;  // [Hz]
   static constexpr auto alarm_value = APB_CLK_FREQ / broadcast_frequency / divider;
   hw_timer_s* broadcast_timer_config = timerBegin(0, divider, true);
-  bool broadcast_flag{};
+  volatile bool broadcast_flag{};
 
   // Broadcast packet initialization
   ServerStatus status_msg = ServerStatus_init_default;
@@ -69,7 +69,10 @@ class SmartCycleServer {
     // Start broadcast timer
     timerAttachInterrupt(
         broadcast_timer_config,
-        [] { SmartCycleServer::get_instance().broadcast_flag = true; },
+        [] { // Broadcast if a client is connected
+          auto& scs = SmartCycleServer::get_instance();
+          scs.broadcast_flag = scs.web_socket.connectedClients();
+        },
         true);
     timerAlarmWrite(broadcast_timer_config, alarm_value, true);
     timerAlarmEnable(broadcast_timer_config);
@@ -79,7 +82,6 @@ class SmartCycleServer {
     web_socket.loop();
 
     if (broadcast_flag) {
-      stream.bytes_written = 0;
       if (!pb_encode_nullterminated(&stream, ServerStatus_fields, &status_msg)) {
         Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
       }

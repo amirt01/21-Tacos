@@ -18,6 +18,7 @@ class SmartCycleMonitor(ctk.CTk):
         self.message = SmartCycle.ServerStatus()
         self.ws_app = websocket.WebSocketApp(
             url,
+            on_open=lambda *_: self.raw_data_text.configure(text="Connected!"),
             on_data=lambda ws, msg, *_: self.on_data(ws, msg)
         )
 
