@@ -125,8 +125,6 @@ class SmartCycleMonitor(ctk.CTk):
         config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
 
     def on_data(self, ws, msg):
-        print("Data Recieved:", msg)
-
         # record all messages other than the null terminator
         if msg != b'\x00':
             self.data += msg

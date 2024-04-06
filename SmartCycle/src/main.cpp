@@ -15,7 +15,7 @@ static constexpr uint8_t LED_PIN{12};
 static constexpr uint8_t MOTOR_PIN{18};
 
 /** STATES **/
-enum States {
+enum class States {
   Asleep,            // Low power mode
   Stopped,           // Waiting to bike again
   Biking             // Coasting or Pedaling at constant speed
