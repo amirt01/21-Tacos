@@ -73,7 +73,8 @@ class SmartCycleServer {
           auto& scs = SmartCycleServer::get_instance();
           scs.broadcast_flag = scs.web_socket.connectedClients();
         },
-        true);
+        true
+    );
     timerAlarmWrite(broadcast_timer_config, alarm_value, true);
     timerAlarmEnable(broadcast_timer_config);
   }
