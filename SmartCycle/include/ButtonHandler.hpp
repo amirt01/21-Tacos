@@ -9,7 +9,7 @@
 
 template<int button_pin>
 class ButtonHandler {
-  // Pin state tracking variable
+  // State tracking variable
   volatile enum class ButtonState : bool { Released, Pressed } button_state{};
 
   // Start the debounce timer when the button is pressed
@@ -18,11 +18,12 @@ class ButtonHandler {
   }
 
   // Update the button state with the pin value when the debounce alarm goes off
-  void IRAM_ATTR debounce_ISR(ButtonHandler& handler) {
+  void debounce_ISR(ButtonHandler& handler) {
     handler.button_state = static_cast<ButtonState>(!digitalRead(button_pin));
   }
 
-// TODO: measure the optimal debounce_time
+  // Debounce timer initialization
+  // TODO: measure the optimal debounce_time
   static constexpr auto debounce_time = 5e4;  // [us]
   esp_timer_handle_t debounce_timer;
   esp_timer_create_args_t timer_args{
