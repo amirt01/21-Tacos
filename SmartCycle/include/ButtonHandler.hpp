@@ -43,13 +43,13 @@ class ButtonHandler {
 
   void setup() {
     attachInterrupt(digitalPinToInterrupt(button_pin),
-                    [] { ButtonHandler::get_instance().button_ISR(); },
+                    []() IRAM_ATTR { ButtonHandler::get_instance().button_ISR(); },
                     CHANGE);
 
     // Setup debounce timer
     timerAttachInterrupt(
         debounce_timer_config,
-        [] { ButtonHandler::get_instance().debounce_ISR(); },
+        []() IRAM_ATTR { ButtonHandler::get_instance().debounce_ISR(); },
         true
     );
     timerAlarmWrite(debounce_timer_config, alarm_value, false);
