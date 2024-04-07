@@ -6,8 +6,8 @@
 
 #include "ButtonHandler.hpp"
 
-auto& bh = ButtonHandler<13, 1>::get_instance();
-auto& bh2 = ButtonHandler<14, 2>::get_instance();
+auto& bh = ButtonHandler<13>::get_instance();
+auto& bh2 = ButtonHandler<14>::get_instance();
 
 void setup() {
   Serial.begin(115200);

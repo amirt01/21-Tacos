@@ -40,8 +40,8 @@ float cadence{};
 
 /** SHIFTING **/
 Shifter shifter{};
-auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN, 1>::get_instance();
-auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN, 2>::get_instance();
+auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN>::get_instance();
+auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN>::get_instance();
 
 /** GEAR LEDs **/
 CRGB gear_leds[Shifter::MAX_GEAR]{};

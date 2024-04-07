@@ -7,28 +7,34 @@
 
 #include <Arduino.h>
 
-template<int button_pin, uint8_t timer>
+template<int button_pin>
 class ButtonHandler {
-  // Debounce timer calculations and initialization
-  // TODO: measure the optimal debounce_time
-  static constexpr auto debounce_time = 50;  // [ms]
-  static constexpr auto divider = 80;  // [Hz]
-  static constexpr auto alarm_value = debounce_time * 1000;  // [us]
-  hw_timer_s* debounce_timer_config = timerBegin(timer, divider, true);
-
   // Pin state tracking variable
   volatile enum class ButtonState : bool { Released, Pressed } button_state{};
 
-  // Reset and start the debounce timer when the button is pressed
+  // Start the debounce timer when the button is pressed
   void IRAM_ATTR button_ISR() {
-    timerRestart(ButtonHandler::get_instance().debounce_timer_config);
-    timerAlarmEnable(debounce_timer_config);
+    esp_timer_start_once(debounce_timer, debounce_time);
   }
 
   // Update the button state with the pin value when the debounce alarm goes off
-  void IRAM_ATTR debounce_ISR() {
-    ButtonHandler::get_instance().button_state = static_cast<ButtonState>(!digitalRead(button_pin));
+  void IRAM_ATTR debounce_ISR(ButtonHandler& handler) {
+    handler.button_state = static_cast<ButtonState>(!digitalRead(button_pin));
   }
+
+// TODO: measure the optimal debounce_time
+  static constexpr auto debounce_time = 5e4;  // [us]
+  esp_timer_handle_t debounce_timer;
+  esp_timer_create_args_t timer_args{
+      [](void* handler_ptr) {
+        auto& handler = *static_cast<ButtonHandler*>(handler_ptr);
+        handler.debounce_ISR(handler);
+      },
+      this,
+      ESP_TIMER_TASK,
+      "button timer",
+      false
+  };
 
   ButtonHandler() = default;
 
@@ -51,12 +57,7 @@ class ButtonHandler {
     );
 
     // Setup debounce alarm
-    timerAttachInterrupt(
-        debounce_timer_config,
-        []() IRAM_ATTR { ButtonHandler::get_instance().debounce_ISR(); },
-        true
-    );
-    timerAlarmWrite(debounce_timer_config, alarm_value, false);
+    esp_timer_create(&timer_args, &debounce_timer);
   }
 
   /** Getters **/

@@ -9,8 +9,8 @@
 
 #include "ButtonHandler.hpp"
 
-auto& up_shift_button = ButtonHandler<13, 1>::get_instance();
-auto& down_shift_button = ButtonHandler<14, 2>::get_instance();
+auto& up_shift_button = ButtonHandler<13>::get_instance();
+auto& down_shift_button = ButtonHandler<14>::get_instance();
 
 Shifter shifter{};
 
