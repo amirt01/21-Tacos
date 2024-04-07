@@ -40,8 +40,8 @@ float cadence{};
 
 /** SHIFTING **/
 Shifter shifter{};
-Button<UP_SHIFT_BUTTON_PIN> up_shift_button{};
-Button<DOWN_SHIFT_BUTTON_PIN> down_shift_button{};
+auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN, 1>::get_instance();
+auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN, 2>::get_instance();
 
 /** GEAR LEDs **/
 CRGB gear_leds[Shifter::MAX_GEAR]{};
@@ -73,11 +73,13 @@ void setup() {
 
   /** Setup Ground Estimator **/
   ground_estimator.setup();
+
+  /** Setup Buttons **/
+  down_shift_button.setup();
+  up_shift_button.setup();
 }
 
 void loop() {
-  up_shift_button.loop();
-  down_shift_button.loop();
   ground_estimator.loop();
   update_server_values();
   server.loop();
