@@ -25,7 +25,7 @@ class ButtonHandler {
   // Debounce timer initialization
   // TODO: measure the optimal debounce_time
   static constexpr auto debounce_time = 5e4;  // [us]
-  esp_timer_handle_t debounce_timer;
+  esp_timer_handle_t debounce_timer{};
   esp_timer_create_args_t timer_args{
       [](void* handler_ptr) {
         auto& handler = *static_cast<ButtonHandler*>(handler_ptr);
