@@ -16,37 +16,41 @@ class ButtonHandler {
   static constexpr auto alarm_value = debounce_time * 1000;  // [us]
   hw_timer_s* debounce_timer_config = timerBegin(timer, divider, true);
 
-  // Pin state tracking variables
+  // Pin state tracking variable
   volatile enum class ButtonState : bool { Released, Pressed } button_state{};
 
+  // Reset and start the debounce timer when the button is pressed
   void IRAM_ATTR button_ISR() {
-    timerWrite(ButtonHandler::get_instance().debounce_timer_config, 0);
+    timerRestart(ButtonHandler::get_instance().debounce_timer_config);
     timerAlarmEnable(debounce_timer_config);
   }
 
+  // Update the button state with the pin value when the debounce alarm goes off
   void IRAM_ATTR debounce_ISR() {
     ButtonHandler::get_instance().button_state = static_cast<ButtonState>(!digitalRead(button_pin));
   }
 
-  ButtonHandler() {
-    pinMode(button_pin, INPUT_PULLUP);
-  }
+  ButtonHandler() = default;
 
  public:
   ButtonHandler(ButtonHandler const&) = delete;
   void operator=(ButtonHandler const&) = delete;
 
   static ButtonHandler& get_instance() {
-    static ButtonHandler b{};
-    return b;
+    static ButtonHandler bh{};
+    return bh;
   }
 
   void setup() {
-    attachInterrupt(digitalPinToInterrupt(button_pin),
-                    []() IRAM_ATTR { ButtonHandler::get_instance().button_ISR(); },
-                    CHANGE);
+    // Setup button interrupt
+    pinMode(button_pin, INPUT_PULLUP);
+    attachInterrupt(
+        digitalPinToInterrupt(button_pin),
+        []() IRAM_ATTR { ButtonHandler::get_instance().button_ISR(); },
+        CHANGE
+    );
 
-    // Setup debounce timer
+    // Setup debounce alarm
     timerAttachInterrupt(
         debounce_timer_config,
         []() IRAM_ATTR { ButtonHandler::get_instance().debounce_ISR(); },

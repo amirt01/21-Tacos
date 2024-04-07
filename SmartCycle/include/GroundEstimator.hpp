@@ -40,9 +40,11 @@ class GroundEstimator {
   }
 
   void setup() {
-    attachInterrupt(digitalPinToInterrupt(reed_switch_pin),
-                    [] { GroundEstimator::get_instance().reed_switch_flag = true; },
-                    FALLING);
+    attachInterrupt(
+        digitalPinToInterrupt(reed_switch_pin),
+        []() IRAM_ATTR { GroundEstimator::get_instance().reed_switch_flag = true; },
+        FALLING
+    );
   }
 
   void loop() {
