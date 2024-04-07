@@ -9,8 +9,8 @@
 
 #include "ButtonHandler.hpp"
 
-Button<13> up_shift_button{};
-Button<14> down_shift_button{};
+auto& up_shift_button = ButtonHandler<13, 1>::get_instance();
+auto& down_shift_button = ButtonHandler<14, 2>::get_instance();
 
 Shifter shifter{};
 
@@ -23,6 +23,9 @@ void setup() {
 
   CFastLED::addLeds<WS2813, 12, GRB>(gear_leds, Shifter::MAX_GEAR);
   FastLED.clear(true);
+
+  up_shift_button.setup();
+  down_shift_button.setup();
 }
 
 void loop() {
@@ -31,8 +34,6 @@ void loop() {
   encoder_value += ceil(0.1 * shifter.get_motor_signal()) - random(0, 4) + random(0, 4);
   Serial.printf("current gear: %i\tencoder_value: %i\t", shifter.get_current_gear(), encoder_value);
 
-  up_shift_button.loop();
-  down_shift_button.loop();
   if (up_shift_button) {
     shifter.shift_up();
   } else if (down_shift_button) {

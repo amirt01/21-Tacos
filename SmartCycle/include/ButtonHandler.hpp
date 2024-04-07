@@ -5,48 +5,62 @@
 #ifndef SMARTCYCLE_LIB_BUTTON_BUTTON_HPP_
 #define SMARTCYCLE_LIB_BUTTON_BUTTON_HPP_
 
-#include "Arduino.h"
+#include <Arduino.h>
 
-template<int button_pin>
-class Button {
+template<int button_pin, uint8_t timer>
+class ButtonHandler {
+  // Debounce timer calculations and initialization
   // TODO: measure the optimal debounce_time
-  static constexpr auto debounce_time{50};  // [ms]
+  static constexpr auto debounce_time = 50;  // [ms]
+  static constexpr auto divider = 80;  // [Hz]
+  static constexpr auto alarm_value = debounce_time * 1000;  // [us]
+  hw_timer_s* debounce_timer_config = timerBegin(timer, divider, true);
 
   // Pin state tracking variables
-  int last_pin_state{HIGH};
-  enum class ButtonState { Released, Pressed } button_state{};
-  unsigned long press_start_time{};
+  volatile enum class ButtonState : bool { Released, Pressed } button_state{};
 
- public:
-  Button() {
+  void IRAM_ATTR button_ISR() {
+    timerWrite(ButtonHandler::get_instance().debounce_timer_config, 0);
+    timerAlarmEnable(debounce_timer_config);
+  }
+
+  void IRAM_ATTR debounce_ISR() {
+    ButtonHandler::get_instance().button_state = static_cast<ButtonState>(!digitalRead(button_pin));
+  }
+
+  ButtonHandler() {
     pinMode(button_pin, INPUT_PULLUP);
   }
 
-  void loop() {
-    const auto pin_state = digitalRead(button_pin);
+ public:
+  ButtonHandler(ButtonHandler const&) = delete;
+  void operator=(ButtonHandler const&) = delete;
 
-    if (pin_state == HIGH) {
-      button_state = ButtonState::Released;
-      press_start_time = 0;
-    } else if (const auto current_time = millis(); current_time - press_start_time > debounce_time) {
-      if (last_pin_state == HIGH) {
-        press_start_time = current_time;
-      } else {
-        button_state = ButtonState::Pressed;
-      }
-    }
+  static ButtonHandler& get_instance() {
+    static ButtonHandler b{};
+    return b;
+  }
 
-    last_pin_state = pin_state;
+  void setup() {
+    attachInterrupt(digitalPinToInterrupt(button_pin),
+                    []() IRAM_ATTR { ButtonHandler::get_instance().button_ISR(); },
+                    CHANGE);
+
+    // Setup debounce timer
+    timerAttachInterrupt(
+        debounce_timer_config,
+        []() IRAM_ATTR { ButtonHandler::get_instance().debounce_ISR(); },
+        true
+    );
+    timerAlarmWrite(debounce_timer_config, alarm_value, false);
   }
 
   /** Getters **/
   [[nodiscard]] constexpr bool state() const noexcept { return button_state == ButtonState::Pressed; }
   [[nodiscard]] explicit operator bool() const noexcept { return this->state(); }
 
-  [[nodiscard]] constexpr unsigned long get_press_start_time() const noexcept { return press_start_time; };
-
   [[maybe_unused, nodiscard]] std::string_view to_str() const noexcept {
-    switch(button_state) {
+    switch (button_state) {
       case ButtonState::Pressed: return "Pressed";
       case ButtonState::Released: return "Released";
       default: return "wtf...";
