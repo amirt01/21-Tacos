@@ -29,20 +29,25 @@ class SmartCycleServer {
     }
   }
 
-  // Broadcast timer calculations and initialization
-  static constexpr auto broadcast_frequency = 10.;  // [Hz]
-  static constexpr auto divider = APB_CLK_FREQ / 1e4;  // [Hz]
-  static constexpr auto alarm_value = APB_CLK_FREQ / broadcast_frequency / divider;
-  hw_timer_s* broadcast_timer_config = timerBegin(0, divider, true);
-  volatile bool broadcast_flag{};
+  // Broadcast timer initialization
+  static constexpr auto publish_rate = 1e5;  // [us]
+  bool broadcast_flag{};
+  esp_timer_handle_t broadcast_timer;
+  esp_timer_create_args_t timer_args{
+      [](void* flag_ptr) { *static_cast<bool*>(flag_ptr) = true; },
+      &broadcast_flag,
+      ESP_TIMER_TASK,
+      "broadcast timer",
+      true
+  };
 
-  // Broadcast packet initialization
+  // Protobuffer initialization
   ServerStatus status_msg = ServerStatus_init_default;
   pb_ostream_t stream{
       [](pb_ostream_t* stream, const pb_byte_t* buf, size_t count) {
-        return static_cast<SmartCycleServer*>(stream->state)->web_socket.broadcastBIN(buf, count);
+        return static_cast<WebSocketsServer*>(stream->state)->broadcastBIN(buf, count);
       },
-      this,
+      &web_socket,
       SIZE_MAX,
       0
   };
@@ -67,20 +72,16 @@ class SmartCycleServer {
     web_socket.onEvent(web_socket_event_handler);
 
     // Start broadcast timer
-    timerAttachInterrupt(
-        broadcast_timer_config,
-        [] { // Broadcast if a client is connected
-          auto& scs = SmartCycleServer::get_instance();
-          scs.broadcast_flag = scs.web_socket.connectedClients();
-        },
-        true
-    );
-    timerAlarmWrite(broadcast_timer_config, alarm_value, true);
-    timerAlarmEnable(broadcast_timer_config);
+    esp_timer_create(&timer_args, &broadcast_timer);
+    esp_timer_start_periodic(broadcast_timer, publish_rate);
   }
 
   void loop() {
     web_socket.loop();
+
+    if (!web_socket.connectedClients()) {
+      return;
+    }
 
     if (broadcast_flag) {
       if (!pb_encode_nullterminated(&stream, ServerStatus_fields, &status_msg)) {
