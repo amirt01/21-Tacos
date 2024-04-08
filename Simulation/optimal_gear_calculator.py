@@ -36,7 +36,7 @@ def plot_speed_range(min_cadence, max_cadence):
     plt.xlim(xmin=plt.xlim()[0] - 1)
     plt.xlabel('Speed (km/h)')
     plt.ylabel('Gears')
-    plt.title('Speed Range for Different Cadences')
+    plt.title(f'Speed Range When Pedaling between {min_cadence} and {max_cadence} RPM')
     plt.show()
 
 
