@@ -24,12 +24,12 @@ message ServerStatus {
 }
 
 message tuning {
-  float nominal_gear_encoder_value_1 = 0;
-  float nominal_gear_encoder_value_2 = 1;
-  float nominal_gear_encoder_value_3 = 2;
-  float nominal_gear_encoder_value_4 = 3;
-  float nominal_gear_encoder_value_5 = 4;
-  float nominal_gear_encoder_value_6 = 5;
+  float nominal_gear_encoder_value_1 = 1;
+  float nominal_gear_encoder_value_2 = 2;
+  float nominal_gear_encoder_value_3 = 3;
+  float nominal_gear_encoder_value_4 = 4;
+  float nominal_gear_encoder_value_5 = 5;
+  float nominal_gear_encoder_value_6 = 6;
 
   float desired_cadence_high = 7;
   float desired_cadence_low = 8;
