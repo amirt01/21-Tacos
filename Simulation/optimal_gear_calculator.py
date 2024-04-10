@@ -28,12 +28,12 @@ def calculate_optimal_gear(speed, cadence):
 
 
 def plot_speed_range(min_cadence, max_cadence):
-    min_speeds = np.array([calculate_nominal_speed(cog_diameter, min_cadence) for cog_diameter in cassette])
-    max_speeds = np.array([calculate_nominal_speed(cog_diameter, max_cadence) for cog_diameter in cassette])
+    min_speeds = [calculate_nominal_speed(cog_diameter, min_cadence) for cog_diameter in cassette]
+    max_speeds = [calculate_nominal_speed(cog_diameter, max_cadence) for cog_diameter in cassette]
     ind = range(1, len(cassette) + 1)
 
-    plt.barh(ind, np.subtract(max_speeds, min_speeds), 0.35, min_speeds)
-    plt.xlim(xmin=plt.xlim()[0] - 1)
+    plt.barh(ind, np.subtract(max_speeds, min_speeds), left=min_speeds, height=0.5, align='center')
+    plt.xlim(xmin=plt.xlim()[0] - 1)  # to display lower xlim nicer
     plt.xlabel('Speed (km/h)')
     plt.ylabel('Gears')
     plt.title(f'Speed Range When Pedaling between {min_cadence} and {max_cadence} RPM')
@@ -41,14 +41,13 @@ def plot_speed_range(min_cadence, max_cadence):
 
 
 def main():
-    cadence_range = [90, 120]
+    cadence_range = (90, 110)
     plot_speed_range(*cadence_range)
 
-    cadence = 90  # [RPM]
+    cadence = 100  # [RPM]
     speed = 20  # [km/h]
     optimal_gear = calculate_optimal_gear(speed, cadence)
-    print(f"The optimal gear for a cadence of {cadence} RPM and "
-          f"ground speed of {speed} km/h is gear {optimal_gear}.")
+    print(f"The optimal gear for a cadence of {cadence} RPM and ground speed of {speed} km/h is gear {optimal_gear}.")
 
 
 if __name__ == "__main__":

@@ -133,7 +133,6 @@ class SmartCycleMonitor(ctk.CTk):
             return
 
         # decode the complete message and handle any error
-        self.message.Clear()
         try:
             self.message.ParseFromString(self.data)
         except DecodeError:
