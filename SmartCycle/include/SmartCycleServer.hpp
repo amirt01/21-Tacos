@@ -19,20 +19,42 @@ class SmartCycleServer {
   // Web socket server initialization
   WebSocketsServer web_socket = WebSocketsServer(80);
 
-  static void web_socket_event_handler(byte num, WStype_t type, uint8_t*, size_t) {
+  static void hexdump(const void* mem, uint32_t len, uint8_t cols = 16) {
+    const uint8_t* src = (const uint8_t*) mem;
+    Serial.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t) src, len, len);
+    for (uint32_t i = 0; i < len; i++) {
+      if (i % cols == 0) {
+        Serial.printf("\n[0x%08X] 0x%08X: ", (ptrdiff_t) src, i);
+      }
+      Serial.printf("%02X ", *src);
+      src++;
+    }
+    Serial.printf("\n");
+  }
+
+  static void web_socket_event_handler(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
     switch (type) {
-      case WStype_DISCONNECTED:Serial.println("Client " + String(num) + " disconnected");
+      case WStype_DISCONNECTED: {
+        Serial.printf("Client %i disconnected\n", num);
         break;
-      case WStype_CONNECTED:Serial.println("Client " + String(num) + " connected");
+      }
+      case WStype_CONNECTED: {
+        Serial.printf("Client %i connected\n", num);
         break;
-      default:break;
+      }
+      case WStype_BIN: {
+        Serial.printf("[%u] get binary length: %u\n", num, length);
+        hexdump(payload, length);
+      }
+      default:
+        break;
     }
   }
 
   // Broadcast timer initialization
   static constexpr auto publish_rate = 1e5;  // [us]
   bool broadcast_flag{};
-  esp_timer_handle_t broadcast_timer;
+  esp_timer_handle_t broadcast_timer{};
   esp_timer_create_args_t timer_args{
       [](void* flag_ptr) { *static_cast<bool*>(flag_ptr) = true; },
       &broadcast_flag,
@@ -42,8 +64,8 @@ class SmartCycleServer {
   };
 
   // Protobuffer initialization
-  ServerStatus status_msg = ServerStatus_init_default;
-  pb_ostream_t stream{
+  SystemStatus status_msg = SystemStatus_init_default;
+  pb_ostream_t status_stream{
       [](pb_ostream_t* stream, const pb_byte_t* buf, size_t count) {
         return static_cast<WebSocketsServer*>(stream->state)->broadcastBIN(buf, count);
       },
@@ -84,8 +106,8 @@ class SmartCycleServer {
     }
 
     if (broadcast_flag) {
-      if (!pb_encode_nullterminated(&stream, ServerStatus_fields, &status_msg)) {
-        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&stream));
+      if (!pb_encode_nullterminated(&status_stream, SystemStatus_fields, &status_msg)) {
+        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&status_stream));
       }
 
       broadcast_flag = false;
@@ -93,7 +115,7 @@ class SmartCycleServer {
   }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
-  ServerStatus& get_msg_ref() { return status_msg; }
+  SystemStatus& get_msg_ref() { return status_msg; }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_

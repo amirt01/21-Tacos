@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-message ServerStatus {
+message SystemStatus {
   float speed = 1;
   float cadence = 2;
   int32 target_gear = 3;
@@ -23,7 +23,7 @@ message ServerStatus {
   ButtonState down_shift_button = 7; 
 }
 
-message tuning {
+message Tuning {
   float nominal_gear_encoder_value_1 = 1;
   float nominal_gear_encoder_value_2 = 2;
   float nominal_gear_encoder_value_3 = 3;
