@@ -33,6 +33,7 @@ std::string_view state_str() {
 /** Server **/
 auto& server = SmartCycleServer::get_instance();
 void update_telemetry_values();
+void update_tuning_values();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
@@ -60,6 +61,7 @@ void setup() {
   WiFiClass::mode(WIFI_AP_STA);
 
   server.setup();
+  update_tuning_values();
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
@@ -137,6 +139,22 @@ void update_telemetry_values() {
           static_cast<Telemetry_State>(current_state),
           static_cast<Telemetry_ButtonState>(up_shift_button.state()),
           static_cast<Telemetry_ButtonState>(down_shift_button.state())
+      }
+  );
+}
+
+void update_tuning_values() {
+  auto& nominal_gear_encoder_values = shifter.get_nominal_gear_encoder_values_ref();
+  server.set_tuning_msg(
+      {
+            nominal_gear_encoder_values[0],
+            nominal_gear_encoder_values[1],
+            nominal_gear_encoder_values[2],
+            nominal_gear_encoder_values[3],
+            nominal_gear_encoder_values[4],
+            nominal_gear_encoder_values[5],
+            120,
+            90
       }
   );
 }

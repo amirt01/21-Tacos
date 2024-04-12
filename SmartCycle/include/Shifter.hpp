@@ -19,7 +19,7 @@ class Shifter {
 
  private:
   // TODO: find the actual nominal encoder values
-  static constexpr std::array<int, MAX_GEAR> nominal_gear_encoder_values{
+  std::array<float, MAX_GEAR> nominal_gear_encoder_values{
       100,  // first gear
       200,  // second gear
       300,  // third gear
@@ -29,10 +29,10 @@ class Shifter {
   };
 
   int target_gear{1};    // [1-6]
-  int motor_signal{};
+  float motor_signal{};
 
   /* ESTIMATES */
-  short encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
+  float encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
 
   unsigned long last_shift_time{};
   unsigned long shift_interval{350};  // time between shift button triggers
@@ -61,7 +61,7 @@ class Shifter {
  public:
   void loop() {
     // PID towards the target gear
-    const int encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder_value;
+    const float encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder_value;
 
     // TODO: figure out optimal Kp, Ki, Kd constants
     static constexpr int Kp{1};
@@ -72,7 +72,7 @@ class Shifter {
   [[nodiscard]] int get_current_gear() const {
     auto closest_nominal_encoder_value_itr =
         std::min_element(nominal_gear_encoder_values.begin(), nominal_gear_encoder_values.end(),
-                         [this](int a, int b) { return abs(a - encoder_value) < abs(b - encoder_value); });
+                         [this](float a, float b) { return abs(a - encoder_value) < abs(b - encoder_value); });
 
     return std::distance(nominal_gear_encoder_values.begin(), closest_nominal_encoder_value_itr) + 1;
   }
@@ -81,7 +81,8 @@ class Shifter {
 
   void reset() { target_gear = get_current_gear(); }
 
-  [[nodiscard]] int get_motor_signal() const { return motor_signal; };
+  [[nodiscard]] float get_motor_signal() const { return motor_signal; };
+  [[nodiscard]] auto& get_nominal_gear_encoder_values_ref() const { return nominal_gear_encoder_values; }
 
   void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
 
