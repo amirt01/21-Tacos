@@ -6,6 +6,7 @@
 #define SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
 
 #include <pb_encode.h>
+#include <pb_decode.h>
 #include "SmartCycle.pb.h"
 
 #include "WiFi.h"
@@ -19,40 +20,30 @@ class SmartCycleServer {
   // Web socket server initialization
   WebSocketsServer web_socket = WebSocketsServer(80);
 
-  static void hexdump(const void* mem, uint32_t len, uint8_t cols = 16) {
-    const uint8_t* src = (const uint8_t*) mem;
-    Serial.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t) src, len, len);
-    for (uint32_t i = 0; i < len; i++) {
-      if (i % cols == 0) {
-        Serial.printf("\n[0x%08X] 0x%08X: ", (ptrdiff_t) src, i);
-      }
-      Serial.printf("%02X ", *src);
-      src++;
-    }
-    Serial.printf("\n");
-  }
-
   static void web_socket_event_handler(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
     switch (type) {
-      case WStype_DISCONNECTED: {
-        Serial.printf("Client %i disconnected\n", num);
+      case WStype_DISCONNECTED: Serial.printf("Client %i disconnected\n", num);
         break;
-      }
-      case WStype_CONNECTED: {
-        Serial.printf("Client %i connected\n", num);
+      case WStype_CONNECTED:Serial.printf("Client %i connected\n", num);
         break;
-      }
       case WStype_BIN: {
-        Serial.printf("[%u] get binary length: %u\n", num, length);
-        hexdump(payload, length);
-      }
-      default:
+        // Wrap the payload into a nanopb input stream
+        auto tuning_stream = pb_istream_from_buffer(payload, length);
+
+        // Decode the stream without overwriting the previously set values
+        auto& instance = SmartCycleServer::get_instance();
+        if (!pb_decode_noinit(&tuning_stream, Tuning_fields, &instance.tuning_msg)) {
+          Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&instance.status_stream));
+        }
+
         break;
+      }
+      default:break;
     }
   }
 
   // Broadcast timer initialization
-  static constexpr auto publish_rate = 1e5;  // [us]
+  static constexpr auto publish_rate = 3e5;  // [us]
   bool broadcast_flag{};
   esp_timer_handle_t broadcast_timer{};
   esp_timer_create_args_t timer_args{
@@ -73,6 +64,8 @@ class SmartCycleServer {
       SIZE_MAX,
       0
   };
+
+  Tuning tuning_msg = Tuning_init_default;
 
   SmartCycleServer() = default;
 
@@ -100,7 +93,6 @@ class SmartCycleServer {
 
   void loop() {
     web_socket.loop();
-
     if (!web_socket.connectedClients()) {
       return;
     }
