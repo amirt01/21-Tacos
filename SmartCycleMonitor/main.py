@@ -15,7 +15,7 @@ class SmartCycleMonitor(ctk.CTk):
 
         url = "ws://192.168.4.1"
         self.data = b''
-        self.message = SmartCycle.ServerStatus()
+        self.message = SmartCycle.Message()
         self.ws_app = websocket.WebSocketApp(
             url,
             on_open=lambda *_: self.raw_data_text.configure(text="Connected!"),
@@ -150,13 +150,14 @@ class SmartCycleMonitor(ctk.CTk):
         config_label.grid(row=0, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
 
         # Create and place horizontal sliders for adjusting gear variables
+        self.tuning_sliders: list[ctk.CTkSlider] = []
         for i in range(6):
             var_label = ctk.CTkLabel(config_frame, text=f"Gear {i+1}", font=label_font)
             var_label.grid(row=i+1, column=0, sticky="E", padx=10, pady=5)
 
             # Create and configure horizontal slider
-            slider = ctk.CTkSlider(config_frame, from_=-100, to=100)
-            slider.grid(row=i+1, column=1, sticky="W", padx=10, pady=5)
+            self.tuning_sliders.append(ctk.CTkSlider(config_frame, from_=-100, to=100))
+            self.tuning_sliders[-1].grid(row=i+1, column=1, sticky="W", padx=10, pady=5)
 
             # Create label to display slider value
             value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
@@ -206,10 +207,15 @@ class SmartCycleMonitor(ctk.CTk):
 
         # store the newly decoded data
         self.raw_data_text.configure(text=MessageToJson(self.message))
-        self.speedometer.set(self.message.speed)
-        self.cadence.set(self.message.cadence)
-        self.target_gear.set(self.message.target_gear)
-        self.current_gear.set(self.message.current_gear)
+        match self.message.WhichOneof("packet"):
+            case "telemetry":
+                self.speedometer.set(self.message.telemetry.speed)
+                self.cadence.set(self.message.telemetry.cadence)
+                self.target_gear.set(self.message.telemetry.target_gear)
+                self.current_gear.set(self.message.telemetry.current_gear)
+            case "tuning":
+                for i in range(6):
+                    self.tuning_sliders[i].set(getattr(self.message.tuning, f"nominal_gear_encoder_value_{i + 1}"))
 
 
 if __name__ == '__main__':
