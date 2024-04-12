@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-message SystemStatus {
+message Telemetry {
   float speed = 1;
   float cadence = 2;
   int32 target_gear = 3;
@@ -33,4 +33,11 @@ message Tuning {
 
   float desired_cadence_high = 7;
   float desired_cadence_low = 8;
+}
+
+message Message {
+  oneof packet {
+    Telemetry telemetry = 1;
+    Tuning tuning = 2;
+  }
 }

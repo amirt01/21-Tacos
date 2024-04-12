@@ -32,7 +32,7 @@ std::string_view state_str() {
 
 /** Server **/
 auto& server = SmartCycleServer::get_instance();
-void update_system_values();
+void update_telemetry_values();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
@@ -81,7 +81,7 @@ void setup() {
 
 void loop() {
   ground_estimator.loop();
-  update_system_values();
+  update_telemetry_values();
   server.loop();
 
 //  log();
@@ -127,15 +127,15 @@ void loop() {
   }
 }
 
-void update_system_values() {
-  auto& msg = server.get_msg_ref();
+void update_telemetry_values() {
+  auto& msg = server.get_telemetry_msg_ref();
   msg.speed = ground_estimator.get_speed();
   msg.cadence = cadence;
   msg.target_gear = shifter.get_target_gear();
   msg.current_gear = shifter.get_current_gear();
-  msg.state = static_cast<SystemStatus_State>(current_state);
-  msg.up_shift_button = static_cast<SystemStatus_ButtonState>(up_shift_button.state());
-  msg.down_shift_button = static_cast<SystemStatus_ButtonState>(down_shift_button.state());
+  msg.state = static_cast<Telemetry_State>(current_state);
+  msg.up_shift_button = static_cast<Telemetry_ButtonState>(up_shift_button.state());
+  msg.down_shift_button = static_cast<Telemetry_ButtonState>(down_shift_button.state());
 }
 
 void update_gear_leds() {

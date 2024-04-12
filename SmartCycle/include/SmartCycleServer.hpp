@@ -24,8 +24,21 @@ class SmartCycleServer {
     switch (type) {
       case WStype_DISCONNECTED: Serial.printf("Client %i disconnected\n", num);
         break;
-      case WStype_CONNECTED:Serial.printf("Client %i connected\n", num);
+      case WStype_CONNECTED: {
+        Serial.printf("Client %i connected\n", num);
+
+        auto& instance = SmartCycleServer::get_instance();
+
+        // Send the initial tuning values
+        Message initial_tuning_msg{};
+        initial_tuning_msg.which_packet = Message_tuning_tag;
+        initial_tuning_msg.packet.tuning = instance.tuning_msg;
+        if (!pb_encode_nullterminated(&instance.socket_stream, Message_fields, &initial_tuning_msg)) {
+          Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&instance.socket_stream));
+        }
+
         break;
+      }
       case WStype_BIN: {
         // Wrap the payload into a nanopb input stream
         auto tuning_stream = pb_istream_from_buffer(payload, length);
@@ -33,7 +46,7 @@ class SmartCycleServer {
         // Decode the stream without overwriting the previously set values
         auto& instance = SmartCycleServer::get_instance();
         if (!pb_decode_noinit(&tuning_stream, Tuning_fields, &instance.tuning_msg)) {
-          Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&instance.status_stream));
+          Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&tuning_stream));
         }
 
         break;
@@ -54,9 +67,12 @@ class SmartCycleServer {
       true
   };
 
+  // Define IO messages
+  Message initial_tuning_msg = {Message_telemetry_tag, Telemetry_init_default};
+  Tuning tuning_msg = Tuning_init_default;
+
   // Protobuffer initialization
-  SystemStatus status_msg = SystemStatus_init_default;
-  pb_ostream_t status_stream{
+  pb_ostream_t socket_stream{
       [](pb_ostream_t* stream, const pb_byte_t* buf, size_t count) {
         return static_cast<WebSocketsServer*>(stream->state)->broadcastBIN(buf, count);
       },
@@ -64,8 +80,6 @@ class SmartCycleServer {
       SIZE_MAX,
       0
   };
-
-  Tuning tuning_msg = Tuning_init_default;
 
   SmartCycleServer() = default;
 
@@ -98,8 +112,8 @@ class SmartCycleServer {
     }
 
     if (broadcast_flag) {
-      if (!pb_encode_nullterminated(&status_stream, SystemStatus_fields, &status_msg)) {
-        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&status_stream));
+      if (!pb_encode_nullterminated(&socket_stream, Message_fields, &initial_tuning_msg)) {
+        Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&socket_stream));
       }
 
       broadcast_flag = false;
@@ -107,7 +121,8 @@ class SmartCycleServer {
   }
 
   // TODO: add flag variable so we only broadcast when there's new data to send
-  SystemStatus& get_msg_ref() { return status_msg; }
+  Telemetry& get_telemetry_msg_ref() { return initial_tuning_msg.packet.telemetry; }
+  Tuning& get_tuning_msg_ref() { return initial_tuning_msg.packet.tuning; }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
