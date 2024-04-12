@@ -158,7 +158,7 @@ class SmartCycleMonitor(ctk.CTk):
 
             # Create and configure horizontal slider
             self.tuning_sliders.append(ctk.CTkSlider(config_frame, from_=0, to=1000))
-            self.tuning_sliders[-1].grid(row=i+1, column=1, sticky="W", padx=10, pady=5)
+            self.tuning_sliders[-1].grid(row=i + 1, column=1, sticky="W", padx=10, pady=5)
 
             # Create label to display slider value
             value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
@@ -190,8 +190,6 @@ class SmartCycleMonitor(ctk.CTk):
         # Create label to display min slider value
         min_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
         min_value_label.grid(row=10, column=2, sticky="W", padx=(0, 10), pady=5)
-
-
 
     def on_data(self, ws, msg):
         # record all messages other than the null terminator
