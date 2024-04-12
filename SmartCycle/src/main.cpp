@@ -128,14 +128,17 @@ void loop() {
 }
 
 void update_telemetry_values() {
-  auto& msg = server.get_telemetry_msg_ref();
-  msg.speed = ground_estimator.get_speed();
-  msg.cadence = cadence;
-  msg.target_gear = shifter.get_target_gear();
-  msg.current_gear = shifter.get_current_gear();
-  msg.state = static_cast<Telemetry_State>(current_state);
-  msg.up_shift_button = static_cast<Telemetry_ButtonState>(up_shift_button.state());
-  msg.down_shift_button = static_cast<Telemetry_ButtonState>(down_shift_button.state());
+  server.set_telemetry_msg(
+      {
+          ground_estimator.get_speed(),
+          cadence,
+          shifter.get_target_gear(),
+          shifter.get_current_gear(),
+          static_cast<Telemetry_State>(current_state),
+          static_cast<Telemetry_ButtonState>(up_shift_button.state()),
+          static_cast<Telemetry_ButtonState>(down_shift_button.state())
+      }
+  );
 }
 
 void update_gear_leds() {
