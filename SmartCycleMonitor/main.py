@@ -31,7 +31,7 @@ class SmartCycleMonitor(ctk.CTk):
         self.columnconfigure((0, 1), pad=20, weight=1)
 
         # Fonts
-        title_font = ctk.CTkFont("ComincSans", 42)
+        title_font = ctk.CTkFont("ComincSans", 42, "bold")
         label_font = ctk.CTkFont("ComicSans", 28)
         text_font = ctk.CTkFont("DS-Digital", 18)
 
@@ -52,35 +52,42 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Speedometer Frame
         speedometer_frame = ctk.CTkFrame(meter_frame)
-        speedometer_frame.grid(row=0, column=0, padx=(10, 5), pady=10, sticky="NS")
+        speedometer_frame.grid(row=0, column=0, padx=(10, 5), pady=10, sticky="NSEW")
+        speedometer_frame.rowconfigure(1, weight=1)
+        speedometer_frame.columnconfigure(0, weight=1)
+        
 
         # Speedometer Label
         ctk.CTkLabel(speedometer_frame, text="Speed", font=label_font).grid(row=0, column=0, pady=5)
 
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
-                                 text_font="DS-Digital 30", scale_color="white", needle_color="red",  # radius=420,
+                                 text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
                                  integer=True, end=60, end_angle=-300, state=ctk.DISABLED)
         self.speedometer.grid(row=1, column=0, padx=10, pady=(5, 10))
 
         # Cadence Frame
         cadence_frame = ctk.CTkFrame(meter_frame)
-        cadence_frame.grid(row=0, column=1, padx=5, pady=10, sticky="NS")
+        cadence_frame.grid(row=0, column=1, padx=5, pady=10, sticky="NSEW")
+        cadence_frame.rowconfigure(1, weight=1)
+        cadence_frame.columnconfigure(0, weight=1)
 
         # Cadence Label
         ctk.CTkLabel(cadence_frame, text="Cadence", font=label_font).grid(row=0, column=0, pady=5)
 
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
-                             text_font="DS-Digital 30", scale_color="white", needle_color="red",  # radius=420,
+                             text_font="DS-Digital 30", scale_color="white", needle_color="red",  radius=420,
                              integer=True, end_angle=-300, state=ctk.DISABLED)
         self.cadence.grid(row=1, column=0, padx=10, pady=(5, 10))
 
         # Gear Frame
         gear_frame = ctk.CTkFrame(meter_frame)
-        gear_frame.grid(row=0, column=2, padx=(5, 10), pady=10, sticky="NS")
+        gear_frame.grid(row=0, column=2, padx=(5, 10), pady=10, sticky="NSEW")
         gear_frame.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
         gear_frame.rowconfigure(0, weight=0)
+        gear_frame.columnconfigure((0, 1), weight=1)
+        gear_frame.columnconfigure((2), weight=0)
 
         # Gear Label
         ctk.CTkLabel(gear_frame, text="Gear", font=label_font).grid(row=0, column=0, columnspan=3, pady=5, padx=20,
@@ -103,6 +110,13 @@ class SmartCycleMonitor(ctk.CTk):
             label = ctk.CTkLabel(gear_frame, text=str(6 - i), font=text_font)
             label.grid(row=i + 1, column=2, sticky="W", padx=(7.5, 20))
 
+        # Gear Slider Labels
+        target_label = ctk.CTkLabel(gear_frame, text="Target", font=text_font)
+        target_label.grid(row=7, column=0, pady=(5, 5), sticky="S")
+
+        current_label = ctk.CTkLabel(gear_frame, text="Current", font=text_font)
+        current_label.grid(row=7, column=1, pady=(5, 5), sticky="S")
+
         # Raw Data Frame
         raw_data_frame = ctk.CTkFrame(self)
         raw_data_frame.grid(row=2, sticky="EW", padx=(0, 5))
@@ -120,11 +134,62 @@ class SmartCycleMonitor(ctk.CTk):
         self.raw_data_text.grid(row=0, column=1, pady=10, padx=(10, 20))
 
         # Tuning Panel
+        '''
         config_frame = ctk.CTkFrame(self, width=420)
-        config_frame.grid(row=0, column=1, rowspan=3, sticky="NS", padx=(5, 0), pady=10)
+        config_frame.grid(row=0, column=1, rowspan=3, sticky="NSEW", padx=(5, 0), pady=10)
 
         config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
         config_label.grid(row=0, column=0, sticky="EWN", padx=10, pady=10)
+        '''
+       # Tuning Panel
+        config_frame = ctk.CTkFrame(self)
+        config_frame.grid(row=0, column=1, rowspan=3, sticky="NSEW", padx=(5, 0), pady=10)
+
+        # Create and place "Tuning" label centered in the frame
+        config_label = ctk.CTkLabel(config_frame, text="Tuning", font=label_font)
+        config_label.grid(row=0, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
+
+        # Create and place horizontal sliders for adjusting gear variables
+        for i in range(6):
+            var_label = ctk.CTkLabel(config_frame, text=f"Gear {i+1}", font=label_font)
+            var_label.grid(row=i+1, column=0, sticky="E", padx=10, pady=5)
+
+            # Create and configure horizontal slider
+            slider = ctk.CTkSlider(config_frame, from_=-100, to=100)
+            slider.grid(row=i+1, column=1, sticky="W", padx=10, pady=5)
+
+            # Create label to display slider value
+            value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
+            value_label.grid(row=i+1, column=2, sticky="W", padx=(0, 10), pady=5)
+
+        # Add space between "Gear 6" and "Desired Cadence Range"
+        empty_row = ctk.CTkFrame(config_frame, height=10)
+        empty_row.grid(row=7, column=0, columnspan=3)
+
+        # Create and place "Desired Cadence Range" label centered in the frame
+        var_label = ctk.CTkLabel(config_frame, text=f"Desired Cadence Range", font=label_font)
+        var_label.grid(row=8, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
+
+        # Create and place sliders for adjusting cadence range
+        var_label_max = ctk.CTkLabel(config_frame, text=f"Max", font=label_font)
+        var_label_max.grid(row=9, column=0, sticky="E", padx=10, pady=5)
+        slider_max = ctk.CTkSlider(config_frame, from_=-100, to=100)
+        slider_max.grid(row=9, column=1, sticky="W", padx=10, pady=5)
+
+        # Create label to display max slider value
+        max_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
+        max_value_label.grid(row=9, column=2, sticky="W", padx=(0, 10), pady=5)
+
+        var_label_min = ctk.CTkLabel(config_frame, text=f"Min", font=label_font)
+        var_label_min.grid(row=10, column=0, sticky="E", padx=10, pady=5)
+        slider_min = ctk.CTkSlider(config_frame, from_=-100, to=100)
+        slider_min.grid(row=10, column=1, sticky="W", padx=10, pady=5)
+
+        # Create label to display min slider value
+        min_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
+        min_value_label.grid(row=10, column=2, sticky="W", padx=(0, 10), pady=5)
+
+
 
     def on_data(self, ws, msg):
         # record all messages other than the null terminator
