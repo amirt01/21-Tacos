@@ -12,7 +12,7 @@ tire_size = 23  # [mm]
 
 # Calculate the speed ratio between the crank [rpm] and the ground [kph]
 def calculate_speed_ratio(cog_diameter):
-    return pi * (wheel_diameter + (2 * tire_size)) / 1000 * (chainring_diameter / cog_diameter)
+    return pi * (wheel_diameter + 2 * tire_size) / 1000 * chainring_diameter / cog_diameter
 
 
 def calculate_nominal_speed(cog_diameter, cadence):
