@@ -1,5 +1,7 @@
 
-#include "Encoder.hpp"
+// #include "Encoder.hpp"
+
+#include <ESP32Encoder.h>
 
 #include <Arduino.h>
 
@@ -12,9 +14,9 @@ static constexpr uint8_t L_PWM_PIN{21};
 static constexpr uint8_t R_PWM_CHAN{0};
 static constexpr uint8_t L_PWM_CHAN{1};
 
+ESP32Encoder encoder;
 
-
-Encoder<ENC_A_PIN, ENC_B_PIN> encoder{};
+// Encoder<ENC_A_PIN, ENC_B_PIN> encoder{};
 
 void setup(){
     Serial.begin(115200);
@@ -27,6 +29,8 @@ void setup(){
     ledcSetup(L_PWM_CHAN, 1000, 10); 
     ledcAttachPin(L_PWM_PIN, L_PWM_CHAN);
 
+    encoder.attachHalfQuad(5, 18);
+    encoder.setCount(0);
 }
 
 
@@ -39,7 +43,7 @@ int direction = 0;
 int setpoint = 20000;
 
 void loop(){
-    encoder.loop();
+    // encoder.loop();
 
     long curTimeMs = millis();
 
@@ -53,7 +57,9 @@ void loop(){
         prevDirTimeMs = curTimeMs;
     }
 
-    int diff = setpoint - encoder.get_enc_val();
+    int cur_enc_val = encoder.getCount();
+
+    int diff = cur_enc_val - setpoint;
 
     int motor_speed = 0;
 
@@ -85,7 +91,7 @@ void loop(){
     }
 
     if(curTimeMs - prevPrintTimeMs > 250){
-        Serial.printf("Encoder Value: %i | Setpoint: %i | Diff: %i | Motor Speed: %i \n", encoder.get_enc_val(), setpoint, diff, motor_speed);
+        Serial.printf("Encoder Value: %i | Setpoint: %i | Diff: %i | Motor Speed: %i \n", cur_enc_val, setpoint, diff, motor_speed);
         prevPrintTimeMs = curTimeMs;
     }
 
