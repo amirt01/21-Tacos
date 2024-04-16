@@ -34,6 +34,9 @@ class Shifter {
   uint8_t target_gear{1};    // [1-6]
   float motor_signal{};
 
+  uint16_t shift_interval{500};
+  unsigned long last_shift_time{};
+
   /* GEAR ESTIMATION LOGIC */
   float encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
 
@@ -63,12 +66,18 @@ class Shifter {
   [[nodiscard]] float get_motor_signal() const { return motor_signal; };
   [[nodiscard]] auto& get_nominal_gear_encoder_values_ref() const { return nominal_gear_encoder_values; }
 
-  void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
+  void set_encoder_value(const float new_encoder_value) { encoder_value = new_encoder_value; }
 
   enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
   void shift(const shift_direction direction) {
+    auto current_time = millis();
+    if (current_time - last_shift_time < shift_interval) {
+      return;
+    }
+
     if (target_gear - get_current_gear() != static_cast<int8_t>(direction)) {
       target_gear = std::clamp(static_cast<uint8_t>(target_gear + static_cast<int8_t>(direction)), MIN_GEAR, MAX_GEAR);
+      last_shift_time = current_time;
     }
   }
 };
