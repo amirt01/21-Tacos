@@ -77,6 +77,8 @@ void setup() {
   /** Setup Ground Estimator **/
   ground_estimator.setup();
 
+  shifter.setup();
+
   /** Setup Buttons **/
   down_shift_button.setup();
   up_shift_button.setup();
@@ -163,8 +165,8 @@ void update_tuning_values() {
           nominal_gear_encoder_values[3],
           nominal_gear_encoder_values[4],
           nominal_gear_encoder_values[5],
-          120,
-          90
+          80,
+          60
       }
   );
 }
