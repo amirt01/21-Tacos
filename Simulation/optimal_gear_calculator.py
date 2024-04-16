@@ -41,10 +41,10 @@ def plot_speed_range(min_cadence, max_cadence):
 
 
 def main():
-    cadence_range = (90, 110)
+    cadence_range = (60, 80)
     plot_speed_range(*cadence_range)
 
-    cadence = 100  # [RPM]
+    cadence = 80  # [RPM]
     speed = 20  # [km/h]
     optimal_gear = calculate_optimal_gear(speed, cadence)
     print(f"The optimal gear for a cadence of {cadence} RPM and ground speed of {speed} km/h is gear {optimal_gear}.")

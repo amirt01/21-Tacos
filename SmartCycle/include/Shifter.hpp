@@ -34,13 +34,24 @@ class Shifter {
   uint8_t target_gear{1};    // [1-6]
   float motor_signal{};
 
-  uint16_t shift_interval{500};
-  unsigned long last_shift_time{};
+  static constexpr auto shift_cooldown = 0.5e6;  // [us]
+  esp_timer_handle_t shift_cooldown_timer{};
+  esp_timer_create_args_t timer_args{
+      [](void* handler_ptr) {},
+      nullptr,
+      ESP_TIMER_TASK,
+      "shift cooldown timer",
+      false
+  };
 
   /* GEAR ESTIMATION LOGIC */
   float encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
 
  public:
+  void setup() {
+    esp_timer_create(&timer_args, &shift_cooldown_timer);
+  }
+
   void loop() {
     // PID towards the target gear
     const float encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder_value;
@@ -70,14 +81,13 @@ class Shifter {
 
   enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
   void shift(const shift_direction direction) {
-    const auto current_time = millis();
-    if (current_time - last_shift_time < shift_interval) {
+    if (esp_timer_is_active(shift_cooldown_timer)) {
       return;
     }
 
     if (target_gear - get_current_gear() != static_cast<int8_t>(direction)) {
       target_gear = std::clamp(static_cast<uint8_t>(target_gear + static_cast<int8_t>(direction)), MIN_GEAR, MAX_GEAR);
-      last_shift_time = current_time;
+      esp_timer_start_once(shift_cooldown_timer, shift_cooldown);
     }
   }
 };
