@@ -39,7 +39,7 @@ void update_tuning_values();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
-float cadence{};
+float cadence{100};
 
 /** SHIFTING **/
 Shifter shifter{};
@@ -54,6 +54,7 @@ void update_gear_leds();
 
 /** RUN FUNCTIONS **/
 [[maybe_unused]] void log();
+[[maybe_unused]] void demo_loop();
 
 void setup() {
   Serial.begin(115200);
@@ -89,6 +90,7 @@ void loop() {
   update_gear_leds();
   shifter.loop();
 
+  demo_loop();
   log();
 
   switch (current_state) {
@@ -212,4 +214,12 @@ void log() {
   static constexpr std::array<uint16_t, 6> cassette = {28, 24, 21, 18, 16, 14}; // [mm]
   auto optimal_gear_itr = std::min_element(cassette.cbegin(), cassette.cend(), speed_dif_cmp);
   return std::distance(cassette.begin(), optimal_gear_itr) + 1;
+}
+
+void demo_loop() {
+  static float encoder_value = 50;
+
+  shifter.set_encoder_value(encoder_value);
+  shifter.loop();
+  encoder_value += ceil(0.025 * shifter.get_motor_signal()) - random(0, 4) + random(0, 4);
 }

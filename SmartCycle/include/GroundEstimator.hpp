@@ -82,7 +82,8 @@ class GroundEstimator {
     }
   }
 
-  [[nodiscard]] float get_speed() const { return speed; }
+//  [[nodiscard]] float get_speed() const { return speed; }
+  [[nodiscard]] float get_speed() const { return 20; }
   [[nodiscard]] float get_acceleration() const { return acceleration; }
 };
 
