@@ -151,18 +151,18 @@ class SmartCycleMonitor(ctk.CTk):
         config_label.grid(row=0, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
 
         # Create and place horizontal sliders for adjusting gear variables
-        self.tuning_sliders: list[ctk.CTkSlider] = []
+        self.tuning_variables = [ctk.DoubleVar() for _ in SmartCycle.Tuning.DESCRIPTOR.fields_by_name]
         for i in range(6):
             var_label = ctk.CTkLabel(config_frame, text=f"Gear {i + 1}", font=label_font)
             var_label.grid(row=i + 1, column=0, sticky="E", padx=10, pady=5)
 
             # Create and configure horizontal slider
-            self.tuning_sliders.append(ctk.CTkSlider(config_frame, from_=0, to=1000))
-            self.tuning_sliders[-1].grid(row=i + 1, column=1, sticky="W", padx=10, pady=5)
+            tuning_slider = ctk.CTkSlider(config_frame, from_=0, to=1000, variable=self.tuning_variables[i])
+            tuning_slider.grid(row=i + 1, column=1, sticky="W", padx=10, pady=5)
 
             # Create label to display slider value
-            value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
-            value_label.grid(row=i + 1, column=2, sticky="W", padx=(0, 10), pady=5)
+            tuning_label = ctk.CTkLabel(config_frame, text="0", font=label_font, textvariable=self.tuning_variables[i])
+            tuning_label.grid(row=i + 1, column=2, sticky="W", padx=(0, 10), pady=5)
 
         # Add space between "Gear 6" and "Desired Cadence Range"
         empty_row = ctk.CTkFrame(config_frame, height=10)
@@ -175,20 +175,21 @@ class SmartCycleMonitor(ctk.CTk):
         # Create and place sliders for adjusting cadence range
         var_label_max = ctk.CTkLabel(config_frame, text=f"Max", font=label_font)
         var_label_max.grid(row=9, column=0, sticky="E", padx=10, pady=5)
-        slider_max = ctk.CTkSlider(config_frame, from_=-100, to=100)
+        slider_max = ctk.CTkSlider(config_frame, from_=0, to=200, variable=self.tuning_variables[6])
         slider_max.grid(row=9, column=1, sticky="W", padx=10, pady=5)
 
         # Create label to display max slider value
-        max_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
+        max_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font, textvariable=self.tuning_variables[6])
         max_value_label.grid(row=9, column=2, sticky="W", padx=(0, 10), pady=5)
 
+        self.tuning_variables.append(ctk.DoubleVar())
         var_label_min = ctk.CTkLabel(config_frame, text=f"Min", font=label_font)
         var_label_min.grid(row=10, column=0, sticky="E", padx=10, pady=5)
-        slider_min = ctk.CTkSlider(config_frame, from_=-100, to=100)
+        slider_min = ctk.CTkSlider(config_frame, from_=0, to=200, variable=self.tuning_variables[7])
         slider_min.grid(row=10, column=1, sticky="W", padx=10, pady=5)
 
         # Create label to display min slider value
-        min_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font)
+        min_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font, textvariable=self.tuning_variables[7])
         min_value_label.grid(row=10, column=2, sticky="W", padx=(0, 10), pady=5)
 
     def on_data(self, ws, msg):
@@ -214,7 +215,9 @@ class SmartCycleMonitor(ctk.CTk):
                 self.current_gear.set(self.message.telemetry.current_gear)
             case "tuning":
                 for i in range(6):
-                    self.tuning_sliders[i].set(getattr(self.message.tuning, f"nominal_gear_encoder_value_{i + 1}"))
+                    self.tuning_variables[i].set(getattr(self.message.tuning, f"nominal_gear_encoder_value_{i + 1}"))
+                self.tuning_variables[6].set(getattr(self.message.tuning, f"desired_cadence_high"))
+                self.tuning_variables[7].set(getattr(self.message.tuning, f"desired_cadence_low"))
 
 
 if __name__ == '__main__':
