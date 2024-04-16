@@ -70,7 +70,7 @@ class Shifter {
 
   enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
   void shift(const shift_direction direction) {
-    auto current_time = millis();
+    const auto current_time = millis();
     if (current_time - last_shift_time < shift_interval) {
       return;
     }
