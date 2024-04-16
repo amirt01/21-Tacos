@@ -7,6 +7,7 @@
 
 #include <array>
 #include <algorithm>
+#include <cmath>
 
 #include "Arduino.h"
 
@@ -14,8 +15,10 @@ class Shifter {
  public:
   /* PHYSICAL CONSTANTS */
   // TODO: find the actual min/max encoder values
-  static constexpr int MIN_GEAR{1};
-  static constexpr int MAX_GEAR{6};
+  static constexpr uint8_t MIN_GEAR{1};
+  static constexpr uint8_t MAX_GEAR{6};
+
+  enum class shift_mode { AUTOMATIC, MANUAL } shift_mode{};
 
  private:
   // TODO: find the actual nominal encoder values
@@ -28,35 +31,11 @@ class Shifter {
       600   // sixth gear
   };
 
-  int target_gear{1};    // [1-6]
+  uint8_t target_gear{1};    // [1-6]
   float motor_signal{};
 
-  /* ESTIMATES */
+  /* GEAR ESTIMATION LOGIC */
   float encoder_value{nominal_gear_encoder_values.front()};  // [encoder range] TODD: find encoder range
-
-  unsigned long last_shift_time{};
-  unsigned long shift_interval{350};  // time between shift button triggers
-  bool shift(int direction) {
-    // don't shift past 1 away from the current gear
-    const auto current_shift_direction = target_gear - get_current_gear();
-    if (current_shift_direction == direction) {
-      return false;
-    }
-    const auto new_gear = target_gear + direction;
-
-    // don't shift if we have shifted recently
-    unsigned long current_time = millis();
-    if (current_time - last_shift_time > shift_interval) {
-      target_gear = std::clamp(new_gear, MIN_GEAR, MAX_GEAR);
-    }
-
-    if (target_gear == new_gear) {
-      last_shift_time = current_time;
-      return true;
-    } else {
-      return false;
-    }
-  }
 
  public:
   void loop() {
@@ -71,12 +50,12 @@ class Shifter {
 
   [[nodiscard]] int get_current_gear() const {
     auto closest_nominal_encoder_value_itr =
-        std::min_element(nominal_gear_encoder_values.begin(), nominal_gear_encoder_values.end(),
+        std::min_element(nominal_gear_encoder_values.cbegin(), nominal_gear_encoder_values.cend(),
                          [this](float a, float b) { return abs(a - encoder_value) < abs(b - encoder_value); });
-
     return std::distance(nominal_gear_encoder_values.begin(), closest_nominal_encoder_value_itr) + 1;
   }
 
+  void set_target_gear(const uint8_t gear) { shift(static_cast<shift_direction>(gear - get_current_gear())); }
   [[nodiscard]] int get_target_gear() const { return target_gear; }
 
   void reset() { target_gear = get_current_gear(); }
@@ -86,9 +65,12 @@ class Shifter {
 
   void set_encoder_value(const short new_encoder_value) { encoder_value = new_encoder_value; }
 
-  // Return if shift successful
-  bool shift_up() { return shift(+1); }
-  bool shift_down() { return shift(-1); }
+  enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
+  void shift(const shift_direction direction) {
+    if (target_gear - get_current_gear() != static_cast<int8_t>(direction)) {
+      target_gear = std::clamp(static_cast<uint8_t>(target_gear + static_cast<int8_t>(direction)), MIN_GEAR, MAX_GEAR);
+    }
+  }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SHIFTER_HPP_

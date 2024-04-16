@@ -14,12 +14,14 @@ class ButtonHandler {
 
   // Start the debounce timer when the button is pressed
   void IRAM_ATTR button_ISR() {
-    esp_timer_start_once(debounce_timer, debounce_time);
+    if (!esp_timer_is_active(debounce_timer)) {
+      esp_timer_start_once(debounce_timer, debounce_time);
+    }
   }
 
   // Update the button state with the pin value when the debounce alarm goes off
-  void debounce_ISR(ButtonHandler& handler) {
-    handler.button_state = static_cast<ButtonState>(!digitalRead(button_pin));
+  void debounce_ISR(ButtonHandler* handler) {
+    handler->button_state = static_cast<ButtonState>(!digitalRead(button_pin));
   }
 
   // Debounce timer initialization
@@ -28,8 +30,8 @@ class ButtonHandler {
   esp_timer_handle_t debounce_timer{};
   esp_timer_create_args_t timer_args{
       [](void* handler_ptr) {
-        auto& handler = *static_cast<ButtonHandler*>(handler_ptr);
-        handler.debounce_ISR(handler);
+        auto handler = static_cast<ButtonHandler*>(handler_ptr);
+        handler->debounce_ISR(handler);
       },
       this,
       ESP_TIMER_TASK,
