@@ -39,7 +39,7 @@ void update_tuning_values();
 
 /** CURRENT ESTIMATES **/
 auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
-float cadence{100};
+float cadence{70};
 
 /** SHIFTING **/
 Shifter shifter{};
@@ -165,8 +165,8 @@ void update_tuning_values() {
           nominal_gear_encoder_values[3],
           nominal_gear_encoder_values[4],
           nominal_gear_encoder_values[5],
-          120,
-          90
+          80,
+          60
       }
   );
 }

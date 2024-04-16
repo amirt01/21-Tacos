@@ -175,7 +175,7 @@ class SmartCycleMonitor(ctk.CTk):
         # Create and place sliders for adjusting cadence range
         var_label_max = ctk.CTkLabel(config_frame, text=f"Max", font=label_font)
         var_label_max.grid(row=9, column=0, sticky="E", padx=10, pady=5)
-        slider_max = ctk.CTkSlider(config_frame, from_=0, to=200, variable=self.tuning_variables[6])
+        slider_max = ctk.CTkSlider(config_frame, from_=0, to=120, variable=self.tuning_variables[6])
         slider_max.grid(row=9, column=1, sticky="W", padx=10, pady=5)
 
         # Create label to display max slider value
@@ -185,7 +185,7 @@ class SmartCycleMonitor(ctk.CTk):
         self.tuning_variables.append(ctk.DoubleVar())
         var_label_min = ctk.CTkLabel(config_frame, text=f"Min", font=label_font)
         var_label_min.grid(row=10, column=0, sticky="E", padx=10, pady=5)
-        slider_min = ctk.CTkSlider(config_frame, from_=0, to=200, variable=self.tuning_variables[7])
+        slider_min = ctk.CTkSlider(config_frame, from_=0, to=120, variable=self.tuning_variables[7])
         slider_min.grid(row=10, column=1, sticky="W", padx=10, pady=5)
 
         # Create label to display min slider value
