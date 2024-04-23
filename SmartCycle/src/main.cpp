@@ -9,10 +9,17 @@
 
 /** PINS **/
 static constexpr uint8_t REED_SWITCH_PIN{27};
+
 static constexpr uint8_t UP_SHIFT_BUTTON_PIN{14};
 static constexpr uint8_t DOWN_SHIFT_BUTTON_PIN{13};
+
 static constexpr uint8_t LED_PIN{12};
-static constexpr uint8_t MOTOR_PIN{18};
+
+static constexpr uint8_t ENCODER_PIN_A{5};
+static constexpr uint8_t ENCODER_PIN_B{18};
+
+static constexpr uint8_t MOTOR_PIN_R{19};
+static constexpr uint8_t MOTOR_PIN_L{21};
 
 /** STATES **/
 enum class States {
@@ -42,7 +49,7 @@ auto& ground_estimator = GroundEstimator<REED_SWITCH_PIN>::get_instance();
 float cadence{};
 
 /** SHIFTING **/
-Shifter shifter{};
+Shifter shifter{ENCODER_PIN_A, ENCODER_PIN_B, MOTOR_PIN_R, MOTOR_PIN_L};
 auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN>::get_instance();
 auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN>::get_instance();
 [[nodiscard]] uint8_t calculate_optimal_gear() noexcept;
@@ -120,17 +127,17 @@ void loop() {
       }
 
       switch (shifter.shift_mode) {
-        case Shifter::shift_mode::AUTOMATIC:
+        case Shifter::ShiftMode::AUTOMATIC:
           if (!up_shift_button == !down_shift_button) {
             shifter.set_target_gear(calculate_optimal_gear());
             break;
           } else {
-            shifter.shift_mode = Shifter::shift_mode::MANUAL;
+            shifter.shift_mode = Shifter::ShiftMode::MANUAL;
             [[fallthrough]];
           }
-        case Shifter::shift_mode::MANUAL:
+        case Shifter::ShiftMode::MANUAL:
           if (up_shift_button && down_shift_button) {
-            shifter.shift_mode = Shifter::shift_mode::AUTOMATIC;
+            shifter.shift_mode = Shifter::ShiftMode::AUTOMATIC;
           } else if (up_shift_button) {
             shifter.shift(Shifter::shift_direction::UP);
           } else if (down_shift_button) {

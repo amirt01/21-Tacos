@@ -24,12 +24,12 @@ message Telemetry {
 }
 
 message Tuning {
-  float nominal_gear_encoder_value_1 = 1;
-  float nominal_gear_encoder_value_2 = 2;
-  float nominal_gear_encoder_value_3 = 3;
-  float nominal_gear_encoder_value_4 = 4;
-  float nominal_gear_encoder_value_5 = 5;
-  float nominal_gear_encoder_value_6 = 6;
+  int64 nominal_gear_encoder_value_1 = 1;
+  int64 nominal_gear_encoder_value_2 = 2;
+  int64 nominal_gear_encoder_value_3 = 3;
+  int64 nominal_gear_encoder_value_4 = 4;
+  int64 nominal_gear_encoder_value_5 = 5;
+  int64 nominal_gear_encoder_value_6 = 6;
 
   float desired_cadence_high = 7;
   float desired_cadence_low = 8;
