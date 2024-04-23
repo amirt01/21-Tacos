@@ -35,7 +35,7 @@ class ButtonHandler {
       },
       this,
       ESP_TIMER_TASK,
-      "button timer",
+      "button timer",  //FIXME: include button pin in timer name
       false
   };
 
