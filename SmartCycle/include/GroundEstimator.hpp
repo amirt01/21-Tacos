@@ -26,6 +26,26 @@ class GroundEstimator {
   float speed{};           // [mps]
   float acceleration{};    // [mps2]
 
+  // Start the debounce timer when the button is pressed
+  void IRAM_ATTR reed_ISR() {
+    if (!esp_timer_is_active(debounce_timer)) {
+      reed_switch_flag = true;
+      esp_timer_start_once(debounce_timer, debounce_time);
+    }
+  }
+
+  // Debounce timer initialization
+  // TODO: measure the optimal debounce_time
+  static constexpr auto debounce_time = 5e4;  // [us]
+  esp_timer_handle_t debounce_timer{};
+  esp_timer_create_args_t timer_args{
+      [](void* handler_ptr) {},
+      this,
+      ESP_TIMER_TASK,
+      "ground estimator debounce timer",
+      false
+  };
+
   GroundEstimator() {
     pinMode(reed_switch_pin, INPUT_PULLUP);
   }
@@ -42,9 +62,12 @@ class GroundEstimator {
   void setup() {
     attachInterrupt(
         digitalPinToInterrupt(reed_switch_pin),
-        []() IRAM_ATTR { GroundEstimator::get_instance().reed_switch_flag = true; },
+        []() IRAM_ATTR { GroundEstimator::get_instance().reed_ISR(); },
         FALLING
     );
+
+    // Setup debounce alarm
+    esp_timer_create(&timer_args, &debounce_timer);
   }
 
   void loop() {
@@ -75,10 +98,8 @@ class GroundEstimator {
       // TODO: find the optimal debounce time
     } else {
       reed_switch_flag = false;
-      if (static constexpr float DEBOUNCE_TIME{0.1f}; time_since_last_reed > DEBOUNCE_TIME) {
-        last_reed_time = current_time;
-        update_estimates();
-      }
+      last_reed_time = current_time;
+      update_estimates();
     }
   }
 
