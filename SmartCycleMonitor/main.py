@@ -165,7 +165,7 @@ class SmartCycleMonitor(ctk.CTk):
             tuning_label.grid(row=i + 1, column=2, sticky="W", padx=(0, 10), pady=5)
 
         # Add space between "Gear 6" and "Desired Cadence Range"
-        empty_row = ctk.CTkFrame(config_frame, height=10)
+        empty_row = ctk.CTkFrame(config_frame, height=20)
         empty_row.grid(row=7, column=0, columnspan=3)
 
         # Create and place "Desired Cadence Range" label centered in the frame
@@ -191,6 +191,12 @@ class SmartCycleMonitor(ctk.CTk):
         # Create label to display min slider value
         min_value_label = ctk.CTkLabel(config_frame, text="0", font=label_font, textvariable=self.tuning_variables[7])
         min_value_label.grid(row=10, column=2, sticky="W", padx=(0, 10), pady=5)
+
+        # Send Data Button for Tuning
+        send_button = ctk.CTkButton(config_frame, text="Send Tuning Update", font=label_font,
+                                     command=self.send_tuning_update)
+        send_button.grid(row=11, column=0, columnspan=3, pady=10)
+
 
     def on_data(self, ws, msg):
         # record all messages other than the null terminator
@@ -219,6 +225,29 @@ class SmartCycleMonitor(ctk.CTk):
                 self.tuning_variables[6].set(getattr(self.message.tuning, f"desired_cadence_high"))
                 self.tuning_variables[7].set(getattr(self.message.tuning, f"desired_cadence_low"))
 
+    def send_tuning_update(self):
+        # Gather current tuning values from GUI elements
+        tuning_values = [
+            self.tuning_variables[i].get() for i in range(8) 
+        ]
 
+        # Create a message containing the tuning values
+        tuning_message = SmartCycle.Tuning()
+        for i in range(6):
+            setattr(tuning_message, f"nominal_gear_encoder_value_{i + 1}", tuning_values[i])
+        tuning_message.desired_cadence_high = tuning_values[6]
+        tuning_message.desired_cadence_low = tuning_values[7]
+
+        # Convert the message to bytes
+        tuning_message_bytes = tuning_message.SerializeToString()
+
+        # Send the message through the WebSocket connection
+        try:
+            self.ws_app.send(tuning_message_bytes)
+            print("Tuning update sent successfully!")
+        except Exception as e:
+            print("Error sending tuning update:", e)
+
+            
 if __name__ == '__main__':
     SmartCycleMonitor().mainloop()
