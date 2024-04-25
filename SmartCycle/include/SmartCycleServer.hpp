@@ -13,6 +13,7 @@
 #include "WebSocketsServer.h"
 
 class SmartCycleServer {
+  
   // Access point variables
   static constexpr char ssid[] = "SmartCycle";
   static constexpr char password[] = "bikesmart";
@@ -20,6 +21,7 @@ class SmartCycleServer {
   // Web socket server initialization
   WebSocketsServer web_socket = WebSocketsServer(80);
 
+  // Event Handler Function for Web Socket
   static void web_socket_event_handler(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
     switch (type) {
       case WStype_DISCONNECTED: Serial.printf("Client %i disconnected\n", num);
@@ -29,20 +31,21 @@ class SmartCycleServer {
 
         // Send the initial tuning values
         auto& instance = SmartCycleServer::get_instance();
-        instance.send_to_socket(instance.tuning_msg);
+        instance.send_to_socket({instance.tuning_msg.get()});
 
         break;
       }
+      // Case for when Binary is received
       case WStype_BIN: {
+        auto& instance = SmartCycleServer::get_instance();
+
         // Wrap the payload into a nanopb input stream
         auto tuning_stream = pb_istream_from_buffer(payload, length);
 
         // Decode the stream without overwriting the previously set values
-        auto& instance = SmartCycleServer::get_instance();
-        if (!pb_decode_noinit(&tuning_stream, Tuning_fields, &instance.tuning_msg)) {
+        if (!pb_decode_noinit(&tuning_stream, Tuning_fields, instance.tuning_msg.get())) {
           Serial.printf("Encoding failed: %s\n", PB_GET_ERROR(&tuning_stream));
         }
-
         break;
       }
       default:break;
@@ -63,7 +66,7 @@ class SmartCycleServer {
 
   // Define IO messages
   Message telemetry_msg = {Message_telemetry_tag, {.telemetry=Telemetry_init_default}};
-  Message tuning_msg = {Message_tuning_tag, {.tuning=Tuning_init_default}};
+  std::reference_wrapper<Tuning> tuning_msg;
 
   void send_to_socket(const Message& msg) {
     static pb_ostream_t socket_stream{
@@ -81,6 +84,7 @@ class SmartCycleServer {
   }
 
   SmartCycleServer() = default;
+
 
  public:
   SmartCycleServer(SmartCycleServer const&) = delete;
@@ -115,7 +119,7 @@ class SmartCycleServer {
 
   // TODO: add flag variable so we only broadcast when there's new data to send
   void set_telemetry_msg(const Telemetry& telemetry) { telemetry_msg.packet.telemetry = telemetry; }
-  void set_tuning_msg(const Tuning& tuning) { tuning_msg.packet.tuning = tuning; }
+  void set_tuning_msg(const std::reference_wrapper<Tuning> message_ref) { tuning_msg = message_ref; }
 };
 
 #endif //SMARTCYCLE_INCLUDE_SMARTCYCLESERVER_HPP_
