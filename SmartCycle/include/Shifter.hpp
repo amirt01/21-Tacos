@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ESP32Encoder.h>
+#include <SmartCycle.pb.h>
 
 #include "Arduino.h"
 #include "nvs_flash.h"
@@ -34,13 +35,15 @@ class Shifter {
 
  private:
   // TODO: find the actual nominal encoder values
-  std::array<int64_t, MAX_GEAR> nominal_gear_encoder_values{
-      100,  // first gear
-      200,  // second gear
-      300,  // third gear
-      400,  // fourth gear
-      500,  // fifth gear
-      600   // sixth gear
+  Tuning tuning_values{
+      .nominal_gear_encoder_value_1 = 100,
+      .nominal_gear_encoder_value_2 = 200,
+      .nominal_gear_encoder_value_3 = 300,
+      .nominal_gear_encoder_value_4 = 400,
+      .nominal_gear_encoder_value_5 = 500,
+      .nominal_gear_encoder_value_6 = 600,
+      .desired_cadence_high = 90.f,
+      .desired_cadence_low = 60.f
   };
 
   uint8_t target_gear{1};    // [1-6]
@@ -59,7 +62,10 @@ class Shifter {
 
  public:
   Shifter(int encoder_pin_A, int encoder_pin_B, int motor_pin_R, int motor_pin_L)
-    : encoder_pin_A(encoder_pin_A), encoder_pin_B(encoder_pin_B), motor_pin_R(motor_pin_R), motor_pin_L(motor_pin_L) {}
+      : encoder_pin_A(encoder_pin_A),
+        encoder_pin_B(encoder_pin_B),
+        motor_pin_R(motor_pin_R),
+        motor_pin_L(motor_pin_L) {}
 
   void setup() {
     // encoder setup
@@ -69,10 +75,10 @@ class Shifter {
     pinMode(motor_pin_R, OUTPUT);
     pinMode(motor_pin_L, OUTPUT);
 
-    ledcSetup(R_PWM_CHAN, 1000, 10); 
+    ledcSetup(R_PWM_CHAN, 1000, 10);
     ledcAttachPin(motor_pin_R, R_PWM_CHAN);
 
-    ledcSetup(L_PWM_CHAN, 1000, 10); 
+    ledcSetup(L_PWM_CHAN, 1000, 10);
     ledcAttachPin(motor_pin_L, L_PWM_CHAN);
 
     // motor setup
@@ -83,7 +89,8 @@ class Shifter {
 
   void loop() {
     // PID towards the target gear
-    const int64_t encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder.getCount();
+    const int64_t encoder_value_error = 1;
+//    const int64_t encoder_value_error = nominal_gear_encoder_values.at(target_gear - 1) - encoder.getCount();
 
     // TODO: figure out optimal Kp, Ki, Kd constants
     static constexpr float Kp{2}, Ki{}, Kd{};
@@ -91,26 +98,28 @@ class Shifter {
     static constexpr int buffer = 1;
     static constexpr int motor_speed_offset = 128;
     static constexpr int64_t motor_speed_max = 1023;
-    const int motor_speed = abs(encoder_value_error) < buffer ? 0 : std::min(static_cast<int64_t>(Kp * abs(encoder_value_error)) + motor_speed_offset, motor_speed_max);
+    const int motor_speed = abs(encoder_value_error) < buffer ? 0 : std::min(
+        static_cast<int64_t>(Kp * abs(encoder_value_error)) + motor_speed_offset, motor_speed_max);
 
     ledcWrite(R_PWM_CHAN, (encoder_value_error > 0) ? 0 : abs(motor_speed));
     ledcWrite(L_PWM_CHAN, (encoder_value_error < 0) ? 0 : abs(motor_speed));
   }
 
   [[nodiscard]] int get_current_gear() {
-    auto closest_nominal_encoder_value_itr =
-        std::min_element(nominal_gear_encoder_values.cbegin(), nominal_gear_encoder_values.cend(),
-                         [this](float a, float b) { return abs(a - encoder.getCount()) < abs(b - encoder.getCount()); });
-    return std::distance(nominal_gear_encoder_values.cbegin(), closest_nominal_encoder_value_itr) + 1;
+    return 1;
+//    auto closest_nominal_encoder_value_itr =
+//        std::min_element(nominal_gear_encoder_values.cbegin(), nominal_gear_encoder_values.cend(),
+//                         [this](float a, float b) { return abs(a - encoder.getCount()) < abs(b - encoder.getCount()); });
+//    return std::distance(nominal_gear_encoder_values.cbegin(), closest_nominal_encoder_value_itr) + 1;
   }
 
   void set_target_gear(const uint8_t gear) { shift(static_cast<shift_direction>(gear - get_current_gear())); }
   [[nodiscard]] int get_target_gear() const { return target_gear; }
+  [[nodiscard]] Tuning* get_tuning_ptr() { return &tuning_values; }
 
   [[nodiscard]] int64_t get_current_encoder_value() { return encoder.getCount(); }
 
   void reset() { target_gear = get_current_gear(); }
-  [[nodiscard]] auto& get_nominal_gear_encoder_values_ref() const { return nominal_gear_encoder_values; }
 
   enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
   void shift(const shift_direction direction) {

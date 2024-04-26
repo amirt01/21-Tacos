@@ -151,7 +151,7 @@ class SmartCycleMonitor(ctk.CTk):
         config_label.grid(row=0, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
 
         # Create and place horizontal sliders for adjusting gear variables
-        self.tuning_variables = [ctk.DoubleVar() for _ in SmartCycle.Tuning.DESCRIPTOR.fields_by_name]
+        self.tuning_variables = [ctk.IntVar() for _ in range(6)]
         for i in range(6):
             var_label = ctk.CTkLabel(config_frame, text=f"Gear {i + 1}", font=label_font)
             var_label.grid(row=i + 1, column=0, sticky="E", padx=10, pady=5)
@@ -173,6 +173,7 @@ class SmartCycleMonitor(ctk.CTk):
         var_label.grid(row=8, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
 
         # Create and place sliders for adjusting cadence range
+        self.tuning_variables.append(ctk.DoubleVar())
         var_label_max = ctk.CTkLabel(config_frame, text=f"Max", font=label_font)
         var_label_max.grid(row=9, column=0, sticky="E", padx=10, pady=5)
         slider_max = ctk.CTkSlider(config_frame, from_=0, to=120, variable=self.tuning_variables[6])
@@ -194,9 +195,8 @@ class SmartCycleMonitor(ctk.CTk):
 
         # Send Data Button for Tuning
         send_button = ctk.CTkButton(config_frame, text="Send Tuning Update", font=label_font,
-                                     command=self.send_tuning_update)
+                                    command=self.send_tuning_update)
         send_button.grid(row=11, column=0, columnspan=3, pady=10)
-
 
     def on_data(self, ws, msg):
         # record all messages other than the null terminator
@@ -222,32 +222,27 @@ class SmartCycleMonitor(ctk.CTk):
             case "tuning":
                 for i in range(6):
                     self.tuning_variables[i].set(getattr(self.message.tuning, f"nominal_gear_encoder_value_{i + 1}"))
-                self.tuning_variables[6].set(getattr(self.message.tuning, f"desired_cadence_high"))
-                self.tuning_variables[7].set(getattr(self.message.tuning, f"desired_cadence_low"))
+                self.tuning_variables[6].set(self.message.tuning.desired_cadence_high)
+                self.tuning_variables[7].set(self.message.tuning.desired_cadence_low)
 
     def send_tuning_update(self):
-        # Gather current tuning values from GUI elements
-        tuning_values = [
-            self.tuning_variables[i].get() for i in range(8) 
-        ]
-
         # Create a message containing the tuning values
         tuning_message = SmartCycle.Tuning()
         for i in range(6):
-            setattr(tuning_message, f"nominal_gear_encoder_value_{i + 1}", tuning_values[i])
-        tuning_message.desired_cadence_high = tuning_values[6]
-        tuning_message.desired_cadence_low = tuning_values[7]
+            setattr(tuning_message, f"nominal_gear_encoder_value_{i + 1}", self.tuning_variables[i].get())
+        tuning_message.desired_cadence_high = self.tuning_variables[6].get()
+        tuning_message.desired_cadence_low = self.tuning_variables[7].get()
 
         # Convert the message to bytes
         tuning_message_bytes = tuning_message.SerializeToString()
 
         # Send the message through the WebSocket connection
         try:
-            self.ws_app.send(tuning_message_bytes)
+            self.ws_app.send_bytes(tuning_message_bytes)
             print("Tuning update sent successfully!")
         except Exception as e:
             print("Error sending tuning update:", e)
 
-            
+
 if __name__ == '__main__':
     SmartCycleMonitor().mainloop()

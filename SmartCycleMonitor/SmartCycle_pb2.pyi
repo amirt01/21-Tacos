@@ -47,15 +47,15 @@ class Tuning(_message.Message):
     NOMINAL_GEAR_ENCODER_VALUE_6_FIELD_NUMBER: _ClassVar[int]
     DESIRED_CADENCE_HIGH_FIELD_NUMBER: _ClassVar[int]
     DESIRED_CADENCE_LOW_FIELD_NUMBER: _ClassVar[int]
-    nominal_gear_encoder_value_1: float
-    nominal_gear_encoder_value_2: float
-    nominal_gear_encoder_value_3: float
-    nominal_gear_encoder_value_4: float
-    nominal_gear_encoder_value_5: float
-    nominal_gear_encoder_value_6: float
+    nominal_gear_encoder_value_1: int
+    nominal_gear_encoder_value_2: int
+    nominal_gear_encoder_value_3: int
+    nominal_gear_encoder_value_4: int
+    nominal_gear_encoder_value_5: int
+    nominal_gear_encoder_value_6: int
     desired_cadence_high: float
     desired_cadence_low: float
-    def __init__(self, nominal_gear_encoder_value_1: _Optional[float] = ..., nominal_gear_encoder_value_2: _Optional[float] = ..., nominal_gear_encoder_value_3: _Optional[float] = ..., nominal_gear_encoder_value_4: _Optional[float] = ..., nominal_gear_encoder_value_5: _Optional[float] = ..., nominal_gear_encoder_value_6: _Optional[float] = ..., desired_cadence_high: _Optional[float] = ..., desired_cadence_low: _Optional[float] = ...) -> None: ...
+    def __init__(self, nominal_gear_encoder_value_1: _Optional[int] = ..., nominal_gear_encoder_value_2: _Optional[int] = ..., nominal_gear_encoder_value_3: _Optional[int] = ..., nominal_gear_encoder_value_4: _Optional[int] = ..., nominal_gear_encoder_value_5: _Optional[int] = ..., nominal_gear_encoder_value_6: _Optional[int] = ..., desired_cadence_high: _Optional[float] = ..., desired_cadence_low: _Optional[float] = ...) -> None: ...
 
 class Message(_message.Message):
     __slots__ = ("telemetry", "tuning")
