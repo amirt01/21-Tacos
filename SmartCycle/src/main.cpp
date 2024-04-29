@@ -183,29 +183,36 @@ void log() {
 
 [[nodiscard]] uint8_t calculate_optimal_gear(const float clamped_cadence) {
   // Calculate the speed ratio between the crank [rpm] and the ground [kph]
-  auto speed_ratio = [](const uint16_t cog_diameter) -> float {
-    static constexpr uint16_t chainring_diameter = 42; // [teeth]
-    static constexpr uint16_t wheel_diameter = 622;    // [mm]
-    static constexpr uint16_t tire_size = 23;          // [mm]
+  constexpr auto get_speed_ratios = []() -> std::array<float, 6> {
+    auto calc_speed_ratio = [](const uint16_t cog_diameter) -> float {
+      uint16_t chainring_diameter = 42; // [teeth]
+      uint16_t wheel_diameter = 622;    // [mm]
+      uint16_t tire_size = 23;          // [mm]
+      return M_PI * (wheel_diameter + 2 * tire_size) / 1000 * chainring_diameter / cog_diameter;
+    };
 
-    return static_cast<float>(M_PI) * (wheel_diameter + 2 * tire_size) / 1000
-        * chainring_diameter / static_cast<float>(cog_diameter);
+    std::array<uint16_t, 6> cassette = {26, 23, 21, 19, 17, 15};  // [teeth]
+    std::array<float, 6> speed_ratios{};
+    for (int i = 0; i < 6; i++) {
+      speed_ratios[i] = calc_speed_ratio(cassette[i]);
+    }
+    return speed_ratios;
   };
 
   // Calculate the nominal speed for a cog at the current pedal cadence
-  auto nominal_speed = [speed_ratio, clamped_cadence](const uint16_t cog_diameter) -> float {
-    return speed_ratio(cog_diameter) * clamped_cadence / 60;
+  auto nominal_speed = [clamped_cadence](const float sr) -> float {
+    return sr * clamped_cadence / 60;
   };
 
   // Calculate the difference in speed between the current speed and the nominal speed for a cog
-  auto speed_dif = [nominal_speed](const uint16_t cog_diameter) -> float {
-    return std::abs(ground_estimator.get_speed() - nominal_speed(cog_diameter));
+  auto speed_dif = [nominal_speed](const float sr) -> float {
+    return std::abs(ground_estimator.get_speed() - nominal_speed(sr));
   };
 
-  auto speed_dif_cmp = [speed_dif](int cog1, int cog2) -> bool {
-    return speed_dif(cog1) < speed_dif(cog2);
+  auto speed_dif_cmp = [speed_dif](float sr1, float sr2) -> bool {
+    return speed_dif(sr1) < speed_dif(sr2);
   };
 
-  static constexpr std::array<uint16_t, 6> cassette = {26, 23, 21, 19, 17, 15};  // [teeth]
-  return std::distance(cassette.begin(), std::min_element(cassette.cbegin(), cassette.cend(), speed_dif_cmp)) + 1;
+  static constexpr auto speed_ratios = get_speed_ratios();
+  return std::distance(speed_ratios.begin(), std::min_element(speed_ratios.cbegin(), speed_ratios.cend(), speed_dif_cmp)) + 1;
 }
