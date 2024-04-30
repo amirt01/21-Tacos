@@ -182,8 +182,8 @@ void log() {
 }
 
 [[nodiscard]] uint8_t calculate_optimal_gear(const float clamped_cadence) {
-  // Calculate the speed ratio between the crank [rpm] and the ground [kph]
-  constexpr auto get_speed_ratios = []() -> std::array<float, 6> {
+  // Calculate the speed ratio between the crank [rpm] and the ground [kph] at compile time
+  static constexpr auto speed_ratios = []() constexpr -> std::array<float, 6> {
     auto calc_speed_ratio = [](const uint16_t cog_diameter) -> float {
       uint16_t chainring_diameter = 42; // [teeth]
       uint16_t wheel_diameter = 622;    // [mm]
@@ -197,7 +197,7 @@ void log() {
       speed_ratios[i] = calc_speed_ratio(cassette[i]);
     }
     return speed_ratios;
-  };
+  }();
 
   // Calculate the nominal speed for a cog at the current pedal cadence
   auto nominal_speed = [clamped_cadence](const float sr) -> float {
@@ -213,6 +213,6 @@ void log() {
     return speed_dif(sr1) < speed_dif(sr2);
   };
 
-  static constexpr auto speed_ratios = get_speed_ratios();
-  return std::distance(speed_ratios.begin(), std::min_element(speed_ratios.cbegin(), speed_ratios.cend(), speed_dif_cmp)) + 1;
+  const auto optimal_gear_itr = std::min_element(speed_ratios.begin(), speed_ratios.end(), speed_dif_cmp);
+  return std::distance(speed_ratios.begin(), optimal_gear_itr) + 1;
 }
