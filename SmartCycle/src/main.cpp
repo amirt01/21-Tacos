@@ -185,13 +185,15 @@ void log() {
   // Calculate the speed ratio between the crank [rpm] and the ground [kph] at compile time
   static constexpr auto speed_ratios = []() constexpr -> std::array<float, 6> {
     auto calc_speed_ratio = [](const uint16_t cog_diameter) -> float {
-      uint16_t chainring_diameter = 42; // [teeth]
+//      uint16_t chainring_diameter = 42; // [teeth]
+      uint16_t chainring_diameter = 38; // [teeth]
       uint16_t wheel_diameter = 622;    // [mm]
       uint16_t tire_size = 23;          // [mm]
       return M_PI * (wheel_diameter + 2 * tire_size) / 1000 * chainring_diameter / cog_diameter;
     };
 
-    std::array<uint16_t, 6> cassette = {26, 23, 21, 19, 17, 15};  // [teeth]
+//    std::array<uint16_t, 6> cassette = {26, 23, 21, 19, 17, 15};  // [teeth]
+    std::array<uint16_t, 6> cassette = {28, 24, 21, 18, 16, 14};  // [teeth]
     std::array<float, 6> speed_ratios{};
     for (int i = 0; i < 6; i++) {
       speed_ratios[i] = calc_speed_ratio(cassette[i]);
