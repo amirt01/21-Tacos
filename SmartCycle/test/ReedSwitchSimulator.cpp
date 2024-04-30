@@ -12,7 +12,7 @@
 
 // Pulse Timer
 esp_timer_handle_t timer_pulser;
-int sampleRate = 1000000;
+int sampleRate = 500000;
 
 void pulser(void *arg){
     

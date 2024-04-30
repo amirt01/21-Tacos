@@ -29,10 +29,10 @@ int biasCount = 0;
 //int i = 0;               
 float total = 0.0; 
 int smoothCount = 0;
-int sampleRate = 125000;
+int sampleRate = 100000;
 
 // Receiver MAC Address
-uint8_t broadcastAddress[] = {0xD8, 0xBC, 0x38, 0xFC, 0xF3, 0xD4}; // Modify accordingly
+uint8_t broadcastAddress[] = {0xD8, 0xBC, 0x38, 0xFC, 0xCC, 0x4C}; // Modify accordingly
 esp_now_peer_info_t peerInfo;
 
 // Message Structure 
@@ -46,7 +46,7 @@ Message cadence;
 void smooth_data(void *arg){
   
   cadence.RPM_z = total / float(smoothCount);
-  Serial.println(cadence.RPM_z);
+  //Serial.println(cadence.RPM_z);
 
   smoothCount = 0;
   total = 0.0;
@@ -71,11 +71,15 @@ esp_timer_create_args_t timer_args = {
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   //Serial.print("\r\nLast Packet Send Status:\t");
   //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+
+  /*
   M5.Lcd.setCursor(0, 40);
   M5.Lcd.clear(); 
   M5.Lcd.printf("Cadence: %0.2f\r\n", cadence.RPM_z);
   M5.Lcd.printf(status == ESP_NOW_SEND_SUCCESS ? "\nDelivery Success" : "\nDelivery Fail");
+  */
 }
+
 
 void setup(void) {
   
@@ -126,6 +130,7 @@ void setup(void) {
   M5.Lcd.clear();
   M5.Lcd.printf("CALIBRATION COMPLETE!");
   delay(3000);
+  M5.Lcd.clear();
   //////////////////////////////////////////////////
 
   // Create Smooth Data Timer
