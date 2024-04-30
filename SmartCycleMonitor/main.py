@@ -1,4 +1,3 @@
-import SmartCycle_pb2 as SmartCycle
 from google.protobuf.message import DecodeError
 from google.protobuf.json_format import MessageToJson
 
@@ -7,6 +6,11 @@ import threading
 import customtkinter as ctk
 import websocket
 from tkdial import Meter
+
+# recompile and import the updated protobuffer file
+import subprocess
+subprocess.run(["protoc", "-I=../Communications", "--python_out=.", "--pyi_out=.", "SmartCycle.proto"])
+import SmartCycle_pb2 as SmartCycle
 
 
 class SmartCycleMonitor(ctk.CTk):

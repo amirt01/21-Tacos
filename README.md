@@ -6,11 +6,6 @@ Here you will find arduino files for the cadence esp-32 which is attatched to th
 ## Communications
 Here is where our protobuffer header files are. Protobuffers are useful for reducing the number of bytes being sent over the wire and formalizing the package structure. Our main board communicates to our GUI app using protobuffers.
 
-To generate the Python protobuffer file, run this command from the project directory:
-```shell
-protoc -I="." --python_out=. --pyi_out=. Communications\SmartCycle.proto
-```
-
 ## Simulation
 This is our folder for basic scripts and other simulated research such as how to handle the reed switch and how to pick the optimal gear. 
 
