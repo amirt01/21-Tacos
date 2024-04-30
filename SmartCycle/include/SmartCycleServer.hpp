@@ -13,7 +13,6 @@
 #include "WebSocketsServer.h"
 
 class SmartCycleServer {
-
   // Access point variables
   static constexpr char ssid[] = "SmartCycle";
   static constexpr char password[] = "bikesmart";

@@ -51,7 +51,7 @@ float cadence{};
 Shifter shifter{ENCODER_PIN_A, ENCODER_PIN_B, MOTOR_PIN_R, MOTOR_PIN_L};
 auto& up_shift_button = ButtonHandler<UP_SHIFT_BUTTON_PIN>::get_instance();
 auto& down_shift_button = ButtonHandler<DOWN_SHIFT_BUTTON_PIN>::get_instance();
-[[nodiscard]] uint8_t calculate_optimal_gear() noexcept;
+[[nodiscard]] uint8_t calculate_optimal_gear(float);
 
 /** GEAR LEDs **/
 CRGB gear_leds[Shifter::MAX_GEAR]{};
@@ -68,6 +68,7 @@ void setup() {
   WiFiClass::mode(WIFI_AP_STA);
 
   server.setup();
+  Serial.printf("Mac Address: %s\n", WiFi.macAddress().c_str());
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
@@ -97,7 +98,7 @@ void loop() {
   update_gear_leds();
   shifter.loop();
 
-  log();
+//  log();
 
   switch (current_state) {
     case States::Asleep: {
@@ -128,7 +129,9 @@ void loop() {
       switch (shifter.shift_mode) {
         case Shifter::ShiftMode::AUTOMATIC:
           if (!up_shift_button == !down_shift_button) {
-            shifter.set_target_gear(calculate_optimal_gear());
+            shifter.set_target_gear(calculate_optimal_gear(std::clamp(cadence,
+                                                                      shifter.get_tuning_ptr()->desired_cadence_low,
+                                                                      shifter.get_tuning_ptr()->desired_cadence_high)));
             break;
           } else {
             shifter.shift_mode = Shifter::ShiftMode::MANUAL;
@@ -145,6 +148,7 @@ void loop() {
       }
     }
   }
+  Serial.println();
 }
 
 void update_telemetry_values() {
@@ -177,31 +181,40 @@ void log() {
                 shifter.get_target_gear());
 }
 
-[[nodiscard]] uint8_t calculate_optimal_gear() noexcept {
-  // Calculate the speed ratio between the crank [rpm] and the ground [kph]
-  auto speed_ratio = [](const uint16_t cog_diameter) {
-    static constexpr uint16_t chainring_diameter = 36; // [mm]
-    static constexpr uint16_t wheel_diameter = 622;    // [mm]
-    static constexpr uint16_t tire_size = 23;          // [mm]
+[[nodiscard]] uint8_t calculate_optimal_gear(const float clamped_cadence) {
+  // Calculate the speed ratio between the crank [rpm] and the ground [kph] at compile time
+  static constexpr auto speed_ratios = []() constexpr -> std::array<float, 6> {
+    auto calc_speed_ratio = [](const uint16_t cog_diameter) -> float {
+//      uint16_t chainring_diameter = 42; // [teeth]
+      uint16_t chainring_diameter = 38; // [teeth]
+      uint16_t wheel_diameter = 622;    // [mm]
+      uint16_t tire_size = 23;          // [mm]
+      return M_PI * (wheel_diameter + 2 * tire_size) / 1000 * chainring_diameter / cog_diameter;
+    };
 
-    return static_cast<float>(M_PI) * (wheel_diameter + 2 * tire_size) / 1000 * chainring_diameter / cog_diameter;
-  };
+//    std::array<uint16_t, 6> cassette = {26, 23, 21, 19, 17, 15};  // [teeth]
+    std::array<uint16_t, 6> cassette = {28, 24, 21, 18, 16, 14};  // [teeth]
+    std::array<float, 6> speed_ratios{};
+    for (int i = 0; i < 6; i++) {
+      speed_ratios[i] = calc_speed_ratio(cassette[i]);
+    }
+    return speed_ratios;
+  }();
 
   // Calculate the nominal speed for a cog at the current pedal cadence
-  auto nominal_speed = [speed_ratio](const uint16_t cog_diameter) {
-    return speed_ratio(cog_diameter) * cadence / 60 * 3.6;
+  auto nominal_speed = [clamped_cadence](const float sr) -> float {
+    return sr * clamped_cadence / 60;
   };
 
   // Calculate the difference in speed between the current speed and the nominal speed for a cog
-  auto speed_dif = [nominal_speed](const uint16_t cog_diameter) {
-    return std::abs(ground_estimator.get_speed() - nominal_speed(cog_diameter));
+  auto speed_dif = [nominal_speed](const float sr) -> float {
+    return std::abs(ground_estimator.get_speed() - nominal_speed(sr));
   };
 
-  auto speed_dif_cmp = [speed_dif](int cog1, int cog2) {
-    return speed_dif(cog1) < speed_dif(cog2);
+  auto speed_dif_cmp = [speed_dif](float sr1, float sr2) -> bool {
+    return speed_dif(sr1) < speed_dif(sr2);
   };
 
-  static constexpr std::array<uint16_t, 6> cassette = {28, 24, 21, 18, 16, 14}; // [mm]
-  auto optimal_gear_itr = std::min_element(cassette.cbegin(), cassette.cend(), speed_dif_cmp);
-  return std::distance(cassette.begin(), optimal_gear_itr) + 1;
+  const auto optimal_gear_itr = std::min_element(speed_ratios.begin(), speed_ratios.end(), speed_dif_cmp);
+  return std::distance(speed_ratios.begin(), optimal_gear_itr) + 1;
 }

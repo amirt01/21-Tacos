@@ -37,7 +37,7 @@ class Shifter {
   // TODO: find the actual nominal encoder values
   union TuningUnion {
     Tuning tuning_msg;
-    decltype(Tuning::nominal_gear_encoder_value_1) encoder_values[6];
+    decltype(Tuning::nominal_gear_encoder_value_1) encoder_values[MAX_GEAR];
   };
 
   TuningUnion tuning_values{
@@ -114,13 +114,20 @@ class Shifter {
   [[nodiscard]] int get_current_gear() {
     auto closest_nominal_encoder_value_itr =
         std::min_element(std::begin(tuning_values.encoder_values), std::end(tuning_values.encoder_values),
-                         [this](float a, float b) { return abs(a - encoder.getCount()) < abs(b - encoder.getCount()); });
+                         [this](float a, float b) {
+                           return abs(a - encoder.getCount()) < abs(b - encoder.getCount());
+                         });
     return std::distance(std::begin(tuning_values.encoder_values), closest_nominal_encoder_value_itr) + 1;
   }
 
   void set_target_gear(const uint8_t gear) { shift(static_cast<shift_direction>(gear - get_current_gear())); }
   [[nodiscard]] int get_target_gear() const { return target_gear; }
   [[nodiscard]] Tuning* get_tuning_ptr() { return &tuning_values.tuning_msg; }
+
+  [[nodiscard]] bool in_cadence_range(const float cadence) const {
+    return tuning_values.tuning_msg.desired_cadence_low < cadence
+        && cadence < tuning_values.tuning_msg.desired_cadence_high;
+  }
 
   [[nodiscard]] int64_t get_current_encoder_value() { return encoder.getCount(); }
 
