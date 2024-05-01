@@ -84,7 +84,7 @@ class Shifter {
     static int64_t encoder_value_error = 0;
     const int64_t last_error = std::exchange(encoder_value_error, tuning_values.encoder_values[target_gear - 1] - encoder.getCount());
 
-    // Our sensors are bad so just assume 1 deg of error is 0 
+    // Our sensors are bad so just assume 1 deg of error is 0
     static constexpr auto buffer = 1;
     if (encoder_value_error < buffer) {
       encoder_value_error = 0;
@@ -135,7 +135,7 @@ class Shifter {
 
     // timer setup
     esp_timer_create(&timer_args, &shift_cooldown_timer);
-    esp_timer_create(&controller_ISR, &controller_dt_us);
+    esp_timer_create(&controller_timer_args, &controller_timer);
   }
 
   [[nodiscard]] int get_current_gear() {
@@ -156,9 +156,10 @@ class Shifter {
         && cadence < tuning_values.tuning_msg.desired_cadence_high;
   }
 
-  [[nodiscard]] int64_t get_current_encoder_value() { return encoder.getCount(); }
-
-  void reset() { target_gear = get_current_gear(); }
+  void reset() {
+    disable_shifting();
+    target_gear = get_current_gear();
+  }
 
   enum class shift_direction : int8_t { UP = 1, DOWN = -1 };
   void shift(const shift_direction direction) {
@@ -171,6 +172,12 @@ class Shifter {
       esp_timer_start_once(shift_cooldown_timer, shift_cooldown);
     }
   }
+
+  void enable_shifting() {
+    Serial.println("shifting enabled");
+    esp_timer_start_periodic(controller_timer, controller_dt_us);
+  };
+  void disable_shifting() { esp_timer_stop(controller_timer); };
 };
 
 #endif //SMARTCYCLE_INCLUDE_SHIFTER_HPP_

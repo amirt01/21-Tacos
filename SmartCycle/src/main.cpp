@@ -26,7 +26,7 @@ enum class States {
   Biking,             // Coasting or Pedaling at constant speed
   Stopped,           // Waiting to bike again
   Asleep            // Low power mode
-} current_state;
+} current_state{States::Asleep};
 
 std::string_view state_str() {
   switch (current_state) {
@@ -38,6 +38,8 @@ std::string_view state_str() {
 }
 
 constexpr auto SPEED_CUTOFF{0.1};  // [meters per second]
+constexpr decltype(millis()) SLEEP_TIME{static_cast<uint32_t>(60e3)};  // [ms]
+decltype(millis()) stop_time{};
 
 /** Server **/
 auto& server = SmartCycleServer::get_instance();
@@ -96,32 +98,36 @@ void loop() {
   update_telemetry_values();
   server.loop();
   update_gear_leds();
-  shifter.loop();
 
-//  log();
+  log();
 
   switch (current_state) {
     case States::Asleep: {
       if (up_shift_button || down_shift_button) {
+        stop_time = millis();
         current_state = States::Stopped;
       } else if (ground_estimator.get_speed() > SPEED_CUTOFF) {
+        shifter.enable_shifting();
         current_state = States::Biking;
       }
       break;
     }
     case States::Stopped: {
       if (ground_estimator.get_speed() > SPEED_CUTOFF) {
+        shifter.enable_shifting();
         current_state = States::Biking;
+      } else if (millis() > stop_time + SLEEP_TIME) {
+        current_state = States::Asleep;
       }
 
       update_gear_leds();
-      shifter.loop();
       break;
     }
     case States::Biking: {
       // TODO: find the stop speed cutoff value
       if (ground_estimator.get_speed() < SPEED_CUTOFF) {
         shifter.reset();
+        stop_time = millis();
         current_state = States::Stopped;
         break;
       }
@@ -129,9 +135,9 @@ void loop() {
       switch (shifter.shift_mode) {
         case Shifter::ShiftMode::AUTOMATIC:
           if (!up_shift_button == !down_shift_button) {
-            shifter.set_target_gear(calculate_optimal_gear(std::clamp((uint32_t)cadence,
-                                                                      shifter.get_tuning_ptr()->desired_cadence_low,
-                                                                      shifter.get_tuning_ptr()->desired_cadence_high)));
+            shifter.set_target_gear(calculate_optimal_gear(std::clamp(cadence,
+                                                                      (float)shifter.get_tuning_ptr()->desired_cadence_low,
+                                                                      (float)shifter.get_tuning_ptr()->desired_cadence_high)));
             break;
           } else {
             shifter.shift_mode = Shifter::ShiftMode::MANUAL;
@@ -148,7 +154,6 @@ void loop() {
       }
     }
   }
-  Serial.println();
 }
 
 void update_telemetry_values() {
