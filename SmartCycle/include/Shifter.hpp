@@ -77,38 +77,34 @@ class Shifter {
       false
   };
 
+  // PID towards the target gear
   void controller_ISR() {
     static constexpr auto const_dt_ms = controller_dt_us / 1000.f;  // [s]
+    static int64_t encoder_value_error{};
 
-    // PID towards the target gear
-    static int64_t encoder_value_error = 0;
-    const int64_t last_error = std::exchange(encoder_value_error, tuning_values.encoder_values[target_gear - 1] - encoder.getCount());
+    const auto last_error = encoder_value_error;
+    encoder_value_error = tuning_values.encoder_values[target_gear - 1] - encoder.getCount();
 
     // Our sensors are bad so just assume 1 deg of error is 0
     static constexpr auto buffer = 1;
-    if (encoder_value_error < buffer) {
+    if (abs(encoder_value_error) < buffer) {
       encoder_value_error = 0;
     }
 
     // TODO: figure out optimal Kp, Ki, Kd constants
-    static constexpr float Kp{2}, Ki{}, Kd{1e-5};
+    static constexpr float Kp{2}, Ki{}, Kd{};
 
     const auto P_term = Kp * encoder_value_error;
-    const auto D_term = Kd * (encoder_value_error - last_error) / const_dt_ms;  // real-time!
+//    const auto D_term = Kd * (encoder_value_error - last_error) / const_dt_ms;  // real-time!
 
-    static constexpr int32_t motor_speed_offset = 128;
+    static constexpr int32_t motor_speed_offset = 256;
     static constexpr int32_t motor_speed_max = 1023;
 
-    const int32_t motor_speed = (int32_t)std::clamp((int32_t)(P_term + D_term), -motor_speed_max, motor_speed_max);
+    const int32_t motor_speed = std::clamp((int32_t)(P_term), -motor_speed_max, motor_speed_max);
+    const auto motor_command = abs(motor_speed) + motor_speed_offset;
 
-    // static constexpr int buffer = 1;
-    // if (abs(encoder_value_error) < buffer) {
-    //   ledcWrite(R_PWM_CHAN, 0);
-    //   ledcWrite(L_PWM_CHAN, 0);
-    // } else {
-    ledcWrite(R_PWM_CHAN, (motor_speed > 0) ? 0 : std::clamp(abs(motor_speed), motor_speed_offset, motor_speed_max));
-    ledcWrite(L_PWM_CHAN, (motor_speed < 0) ? 0 : std::clamp(abs(motor_speed), motor_speed_offset, motor_speed_max));
-    // }
+    ledcWrite(R_PWM_CHAN, (motor_speed > 0) ? 0 : motor_command);
+    ledcWrite(L_PWM_CHAN, (motor_speed < 0) ? 0 : motor_command);
   }
 
  public:
