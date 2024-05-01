@@ -79,7 +79,7 @@ class Shifter {
 
   // PID towards the target gear
   void controller_ISR() {
-    static constexpr auto const_dt_ms = controller_dt_us / 1000.f;  // [s]
+    static constexpr auto const_dt_ms = controller_dt_us / 1000.f;  // [ms]
     static int64_t encoder_value_error{};
 
     const auto last_error = encoder_value_error;
@@ -92,15 +92,15 @@ class Shifter {
     }
 
     // TODO: figure out optimal Kp, Ki, Kd constants
-    static constexpr float Kp{2}, Ki{}, Kd{};
+    static constexpr float Kp{2}, Ki{}, Kd{0.0001};
 
     const auto P_term = Kp * encoder_value_error;
-//    const auto D_term = Kd * (encoder_value_error - last_error) / const_dt_ms;  // real-time!
+    const auto D_term = Kd * (encoder_value_error - last_error) / const_dt_ms;  // real-time!
 
     static constexpr int32_t motor_speed_offset = 256;
     static constexpr int32_t motor_speed_max = 1023;
 
-    const int32_t motor_speed = std::clamp((int32_t)(P_term), -motor_speed_max, motor_speed_max);
+    const int32_t motor_speed = std::clamp((int32_t)(P_term + D_term), -motor_speed_max, motor_speed_max);
     const auto motor_command = abs(motor_speed) + motor_speed_offset;
 
     ledcWrite(R_PWM_CHAN, (motor_speed > 0) ? 0 : motor_command);
