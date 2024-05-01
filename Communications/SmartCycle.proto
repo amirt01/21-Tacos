@@ -31,8 +31,8 @@ message Tuning {
   int64 nominal_gear_encoder_value_5 = 5;
   int64 nominal_gear_encoder_value_6 = 6;
 
-  float desired_cadence_high = 7;
-  float desired_cadence_low = 8;
+  uint32 desired_cadence_high = 7;
+  uint32 desired_cadence_low = 8;
 }
 
 message Message {

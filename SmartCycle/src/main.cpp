@@ -129,7 +129,7 @@ void loop() {
       switch (shifter.shift_mode) {
         case Shifter::ShiftMode::AUTOMATIC:
           if (!up_shift_button == !down_shift_button) {
-            shifter.set_target_gear(calculate_optimal_gear(std::clamp(cadence,
+            shifter.set_target_gear(calculate_optimal_gear(std::clamp((uint32_t)cadence,
                                                                       shifter.get_tuning_ptr()->desired_cadence_low,
                                                                       shifter.get_tuning_ptr()->desired_cadence_high)));
             break;

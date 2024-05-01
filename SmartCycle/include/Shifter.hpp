@@ -48,8 +48,8 @@ class Shifter {
           .nominal_gear_encoder_value_4 = 400,
           .nominal_gear_encoder_value_5 = 500,
           .nominal_gear_encoder_value_6 = 600,
-          .desired_cadence_high = 90.f,
-          .desired_cadence_low = 60.f
+          .desired_cadence_high = 90,
+          .desired_cadence_low = 60
       }
   };
 
@@ -67,6 +67,50 @@ class Shifter {
       false
   };
 
+  static constexpr float controller_dt_us = 0.1e3;  // [us]
+  esp_timer_handle_t controller_timer{};
+  esp_timer_create_args_t controller_timer_args{
+      [](void* handler_ptr) { static_cast<Shifter*>(handler_ptr)->controller_ISR(); },
+      this,
+      ESP_TIMER_TASK,
+      "controller timer",
+      false
+  };
+
+  void controller_ISR() {
+    static constexpr auto const_dt_ms = controller_dt_us / 1000.f;  // [s]
+
+    // PID towards the target gear
+    static int64_t encoder_value_error = 0;
+    const int64_t last_error = std::exchange(encoder_value_error, tuning_values.encoder_values[target_gear - 1] - encoder.getCount());
+
+    // Our sensors are bad so just assume 1 deg of error is 0 
+    static constexpr auto buffer = 1;
+    if (encoder_value_error < buffer) {
+      encoder_value_error = 0;
+    }
+
+    // TODO: figure out optimal Kp, Ki, Kd constants
+    static constexpr float Kp{2}, Ki{}, Kd{1e-5};
+
+    const auto P_term = Kp * encoder_value_error;
+    const auto D_term = Kd * (encoder_value_error - last_error) / const_dt_ms;  // real-time!
+
+    static constexpr int32_t motor_speed_offset = 128;
+    static constexpr int32_t motor_speed_max = 1023;
+
+    const int32_t motor_speed = (int32_t)std::clamp((int32_t)(P_term + D_term), -motor_speed_max, motor_speed_max);
+
+    // static constexpr int buffer = 1;
+    // if (abs(encoder_value_error) < buffer) {
+    //   ledcWrite(R_PWM_CHAN, 0);
+    //   ledcWrite(L_PWM_CHAN, 0);
+    // } else {
+    ledcWrite(R_PWM_CHAN, (motor_speed > 0) ? 0 : std::clamp(abs(motor_speed), motor_speed_offset, motor_speed_max));
+    ledcWrite(L_PWM_CHAN, (motor_speed < 0) ? 0 : std::clamp(abs(motor_speed), motor_speed_offset, motor_speed_max));
+    // }
+  }
+
  public:
   Shifter(int encoder_pin_A, int encoder_pin_B, int motor_pin_R, int motor_pin_L)
       : encoder_pin_A(encoder_pin_A),
@@ -79,6 +123,7 @@ class Shifter {
     encoder.attachHalfQuad(encoder_pin_A, encoder_pin_B);
     encoder.setCount(0);
 
+    // motor setup
     pinMode(motor_pin_R, OUTPUT);
     pinMode(motor_pin_L, OUTPUT);
 
@@ -88,27 +133,9 @@ class Shifter {
     ledcSetup(L_PWM_CHAN, 1000, 10);
     ledcAttachPin(motor_pin_L, L_PWM_CHAN);
 
-    // motor setup
-
     // timer setup
     esp_timer_create(&timer_args, &shift_cooldown_timer);
-  }
-
-  void loop() {
-    // PID towards the target gear
-    const int64_t encoder_value_error = tuning_values.encoder_values[target_gear - 1] - encoder.getCount();
-
-    // TODO: figure out optimal Kp, Ki, Kd constants
-    static constexpr float Kp{2}, Ki{}, Kd{};
-
-    static constexpr int buffer = 1;
-    static constexpr int motor_speed_offset = 128;
-    static constexpr int64_t motor_speed_max = 1023;
-    const int motor_speed = abs(encoder_value_error) < buffer ? 0 : std::min(
-        static_cast<int64_t>(Kp * abs(encoder_value_error)) + motor_speed_offset, motor_speed_max);
-
-    ledcWrite(R_PWM_CHAN, (encoder_value_error > 0) ? 0 : abs(motor_speed));
-    ledcWrite(L_PWM_CHAN, (encoder_value_error < 0) ? 0 : abs(motor_speed));
+    esp_timer_create(&controller_ISR, &controller_dt_us);
   }
 
   [[nodiscard]] int get_current_gear() {
