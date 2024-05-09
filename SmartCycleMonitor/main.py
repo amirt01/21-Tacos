@@ -63,7 +63,7 @@ class SmartCycleMonitor(ctk.CTk):
         speedometer_frame.columnconfigure(0, weight=1)
 
         # Speedometer Label
-        ctk.CTkLabel(speedometer_frame, text="Speed", font=label_font).grid(row=0, column=0, pady=5)
+        ctk.CTkLabel(speedometer_frame, text="Speed (m/s)", font=label_font).grid(row=0, column=0, pady=5)
 
         # Speedometer Dial
         self.speedometer = Meter(speedometer_frame, border_width=0, fg="#1f6aa5", text_color="white",
@@ -78,7 +78,7 @@ class SmartCycleMonitor(ctk.CTk):
         cadence_frame.columnconfigure(0, weight=1)
 
         # Cadence Label
-        ctk.CTkLabel(cadence_frame, text="Cadence", font=label_font).grid(row=0, column=0, pady=5)
+        ctk.CTkLabel(cadence_frame, text="Cadence (RPM)", font=label_font).grid(row=0, column=0, pady=5)
 
         # Cadence Dial
         self.cadence = Meter(cadence_frame, border_width=0, fg="#1f6aa5", text_color="white", end=120,
@@ -173,7 +173,7 @@ class SmartCycleMonitor(ctk.CTk):
         empty_row.grid(row=7, column=0, columnspan=3)
 
         # Create and place "Desired Cadence Range" label centered in the frame
-        var_label = ctk.CTkLabel(config_frame, text=f"Desired Cadence Range", font=label_font)
+        var_label = ctk.CTkLabel(config_frame, text=f"Desired Cadence Range (RPM)", font=label_font)
         var_label.grid(row=8, column=0, columnspan=3, sticky="NSEW", padx=10, pady=10)
 
         # Create and place sliders for adjusting cadence range
