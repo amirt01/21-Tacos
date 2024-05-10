@@ -16,9 +16,9 @@ int sampleRate = 500000;
 
 void pulser(void *arg){
     
-    digitalWrite(2, HIGH);
-    delay(50);
     digitalWrite(2, LOW);
+    delay(10);
+    digitalWrite(2, HIGH);
     
 }
 
